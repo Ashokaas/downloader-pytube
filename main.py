@@ -8,8 +8,8 @@ def progress(streams, chunk: bytes, bytes_remaining: int):
     contentsize = video.filesize
     size = contentsize - bytes_remaining
 
-    print('\r' + '[Download progress]:[%s%s]%.2f%%;' % (
-    '█' * int(size*20/contentsize), ' '*(20-int(size*20/contentsize)), float(size/contentsize*100)), end='')
+    print('\r' + 'Téléchargement en cours :[%s%s]%.2f%%;' % (
+    '█' * int(size*20/contentsize), ' '*(20-int(size*20/contentsize)), float(size/contentsize*100)), size, " / ", contentsize, end='')
 
     
 # -- Convertir les secondes en temps lisible
@@ -25,51 +25,47 @@ def duree(tps):
 def poids_video(poids):
     return "Pierre qui roule n'amasse pas mousse" # A finir/commencer
     
-def download_video():
-    
-    url = input("Lien de la vidéo : ")
-    yt = YouTube(url, on_progress_callback=progress)
 
-    # -- Print tous les flux video
-    for stream in yt.streams:
-        print(stream)
 
-        
-    # -- Informations --
-    print("Titre : " + yt.title)
-    print("Chaîne : " + yt.author)
-    print("Vues : " + str(yt.views))
-    print("Durée : " + duree(yt.length))
+url = input("Lien de la vidéo : ")
+yt = YouTube(url, on_progress_callback=progress)
+
+# -- Print tous les flux video
+for stream in yt.streams:
+    print(stream)
 
     
-    # -- Qualité --
-    print(Fore.RED + "Téléchargement :")
-    print(Fore.GREEN + "(b)est", Fore.YELLOW + "(w)orst", Fore.BLUE + "(a)udio", Fore.WHITE + "(e)xit")
-    choix = input("Choix : ")
-    
-    # Effectue l'action de la variable "choix"
-    match choix:
-        case 'b':
-            print("oui")
-        case 'w':
-            print("non")
-        case 'a':
-            print("noui")
-        case 'e':
-            quit()
+# -- Informations --
+print("Titre : " + yt.title)
+print("Chaîne : " + yt.author)
+print("Vues : " + str(yt.views))
+print("Durée : " + duree(yt.length))
 
 
-    #print(yt.streams.filter())
+# -- Qualité --
+print(Fore.RED + "Téléchargement :")
+print(Fore.GREEN + "(b)est", Fore.YELLOW + "(w)orst", Fore.BLUE + "(a)udio", Fore.WHITE + "(e)xit")
+choix = input("Choix : ")
 
-    video = yt.streams.get_highest_resolution()
-    print(video)
+# Effectue l'action de la variable "choix"
+match choix:
+    case 'b':
+        print("oui")
+    case 'w':
+        print("non")
+    case 'a':
+        print("noui")
+    case 'e':
+        quit()
 
-    print(str(round(video.filesize/1000000)) + " MO") # poids_video()
 
-    #video.download()
+#print(yt.streams.filter())
 
-    print("Download Completed")
-    
-    
-    
-download_video()
+url = 'https://www.youtube.com/watch?v=Om9y6jW8SPo'
+yt = YouTube(url, on_progress_callback=progress)
+video = yt.streams.get_highest_resolution()
+video.download()
+
+print("Download Completed")
+
+
