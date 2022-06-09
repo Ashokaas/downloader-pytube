@@ -12,4 +12,8 @@ def duree(tps):
 
 
 def poids_video(poids):
-    return "Pierre qui roule n'amasse pas mousse" # A finir/commencer
+    poids = poids*10**-6
+    if poids < 1000:
+        return poids
+    else:
+        return poids*10**-9
