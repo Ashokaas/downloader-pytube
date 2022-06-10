@@ -12,11 +12,10 @@ def duree(tps):
 
 
 def poids_video(poids):
-    poids = poids*10**-6
-    if poids < 1000:
-        return poids
+    if poids*10**-6 < 1000:
+        return (str(round(poids*10**-6, 2)) + "mo")
     else:
-        return poids*10**-9
+        return (str(round(poids*10**-9, 2)) + "go")
 
 if __name__ == "__main__":
-    print(poids_video(4875096412))
+    print(poids_video(369864896))

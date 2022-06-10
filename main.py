@@ -7,16 +7,35 @@ from convertions import *
 
 
 
-def meilleur_ou_pire_qualite(reverse=False):
-    qualites = ["144p", "240p", "360p", "480p", "720p", "1080p", "1440p", "2160p", "4320p", "8640p"]
-    if reverse == True:
-        qualites.reverse()
-    video = []
-    for i in range(len(qualites)):
-        video = yt.streams.filter(res=qualites[i])
-        if len(video) != 0:
-            break
+def meilleur_qualite():
+    qualite_max = 0
+    for stream in yt.streams:
+        if stream.resolution != None:
+            qualite_video = int(stream.resolution[0:-1])
+            if qualite_video > qualite_max:
+                qualite_max = qualite_video
+    qualite_max = str(qualite_max) + "p"
+    video = yt.streams.filter(res=qualite_max)
     return video
+
+
+def audio():
+    qualite_max = 0
+    for stream in yt.streams.filter(mime_type="audio/webm"):
+        if stream.abr != None:
+            qualite_audio = int(stream.abr[0:-4])
+            if qualite_audio > qualite_max:
+                qualite_max = qualite_audio
+    qualite_max = str(qualite_max) + "kbps"
+    video = yt.streams.filter(mime_type="audio/webm", abr=qualite_max)
+    return video[0]
+
+
+def valider_telechargement(video):
+    liste_video = []
+    for stream in video:
+        if stream.mime_type != "audio/mp4" and stream.mime_type != "audio/webm":
+            liste_video.append({"type": stream.mime_type, "resolution": stream.resolution, "fps": stream.fps, "itag": stream.itag})
 
     
 def telecharger_video(url):
@@ -62,16 +81,16 @@ def telecharger_video(url):
     # Effectue l'action de la variable "choix"
     match choix:
         case 'b':
-            video = meilleur_ou_pire_qualite(True)
+            video = meilleur_qualite()
+            valider_telechargement(video)
         case 's':
-            video = meilleur_ou_pire_qualite()
+            video = yt.streams
         case 'a':
-            print("noui")
+            video = audio()
+            #video.download(r'C:\Users\antot\Downloads')
         case 'e':
             quit()
 
-
-    print(video)
 
 
 
@@ -81,4 +100,4 @@ def telecharger_video(url):
 
 
 if __name__ == "__main__":
-    print("oui")
+    telecharger_video("https://www.youtube.com/watch?v=C-FWMpbBHpU")
