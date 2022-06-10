@@ -17,3 +17,6 @@ def poids_video(poids):
         return poids
     else:
         return poids*10**-9
+
+if __name__ == "__main__":
+    print(poids_video(4875096412))

@@ -19,7 +19,9 @@ def meilleur_ou_pire_qualite(reverse=False):
     return video
 
     
-def telecharger_video():
+def telecharger_video(url):
+
+    print(url)
 
     # -- Barre de Progression -- (non officielle)
     def progress(streams, chunk: bytes, bytes_remaining: int):
@@ -30,7 +32,6 @@ def telecharger_video():
         '█' * int(size*20/contentsize), ' '*(20-int(size*20/contentsize)), float(size/contentsize*100)), size, " / ", contentsize, end='')
 
 
-    url = "https://www.youtube.com/watch?v=p1xBsY6ovxo" #input("Lien de la vidéo : ")
     print("Récupération des informations de la vidéo...")
 
     global yt
@@ -73,10 +74,11 @@ def telecharger_video():
     print(video)
 
 
-    
+
     #video.download()
 
     print("\nDownload Completed")
 
 
-telecharger_video()
+if __name__ == "__main__":
+    print("oui")
