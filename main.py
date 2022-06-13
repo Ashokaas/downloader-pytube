@@ -8,6 +8,7 @@ import progressbar as progress
 from colorama import init, Fore
 import ffmpeg
 import os
+from time import sleep
 # -- Importation des fonctions supplémentaires
 from convertions import *
 
@@ -23,6 +24,11 @@ def combiner_audio(video_name, audio_name, out_name):
     final_clip = my_clip.set_audio(audio_background)
     # Enregistre la vidéo et l'audio dans le même fichier
     final_clip.write_videofile(out_name)
+
+
+def supprimer_fichier_dossier(dossier):
+    for fichier in os.listdir(dossier):
+        os.remove(dossier + "/" + fichier)
 
 
 def select():
@@ -90,6 +96,7 @@ def choix_video(video):
                     "\n" + "    Résolution : " + str(liste_video[i]["resolution"]) + 
                     "\n" + "    FPS :        " + str(liste_video[i]["fps"]) + 
                     "\n" + "    Taille :     " + str(liste_video[i]["taille"]))
+    print("")
     x = int(input("ID de la vidéo à télécharger : "))
     return (x, liste_video)
     
@@ -97,8 +104,6 @@ def choix_video(video):
 
     
 def telecharger_video(url):
-
-    print(url)
 
     # -- Barre de Progression -- (principalement code internet)
     def progress(streams, chunk: bytes, bytes_remaining: int):
@@ -120,6 +125,7 @@ def telecharger_video(url):
 
         
     # -- Informations --
+    print("")
     print("Titre : " + yt.title)
     print("Chaîne : " + yt.author)
     print("Vues : " + str(yt.views))
@@ -127,6 +133,7 @@ def telecharger_video(url):
 
 
     # -- Qualité --
+    print("")
     print(Fore.RED + "Téléchargement :")
     print(Fore.GREEN + "(b)est", 
           Fore.YELLOW + "(s)elect", 
@@ -141,10 +148,27 @@ def telecharger_video(url):
     match choix:
         case 'b':
             video = valider_telechargement()
+            print("Téléchargement en cours...")
+            if video.mime_type == "video/webm":
+                video_place = r'video/temp/video_temp/' + formatage_video_name(video.title) + video.resolution + '.webm'
+                audio_place = r'video/temp/audio_temp/' + formatage_video_name(video.title) + video.resolution + '.webm'
+                output_place = r'video/video/' + formatage_video_name(video.title) + video.resolution + '.mp4'
+                print(audio_place + '\n' + video_place + '\n' + output_place)
+                
+                video.download(video_place)
+                audio_for_video = audio()
+                audio_for_video.download(audio_place)
+
+                #combiner_audio(video_place, audio_place, output_place)
+
+                supprimer_fichier_dossier(r"video/temp/audio_temp")
+                supprimer_fichier_dossier(r"video/temp/video_temp")
         case 's':
             video = select()
+            video.download(r'video/video/')
         case 'a':
-            audio_for_video = audio()
+            video = audio()
+            video.download(r'video/audio/')
         case 'e':
             quit()
 
@@ -152,19 +176,9 @@ def telecharger_video(url):
 
     # -- Combine l'audio et la vidéo des fichiers .webm (+1080p), on est obligé de faire ça car Pytube est PAS TRES TRES GENTIL
     # C'est Très TRES long
-    print("Téléchargement en cours...")
-    if video.subtype == "webm":
-        video_place = r'video/video/' + formatage_video_name(video.title) + '.webm'
-        audio_place = r'video/audio/' + formatage_video_name(video.title) + '.webm'
-        output_place = r'video/output/' + formatage_video_name(video.title) + '.mp4'
-        print(audio_place + '\n' + video_place + '\n' + output_place)
-        '''
-        video.download(video_place)
-        audio_for_video = audio()
-        audio_for_video.download(audio_place)'''
-        
+    
 
-        #combiner_audio(video_place, audio_place, output_place)
+
         
 
     #video.download()
