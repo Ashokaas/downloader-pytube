@@ -13,8 +13,10 @@ from time import strftime, gmtime
 # -- Importation des fonctions supplémentaires
 from convertions import *
 from main import *
+import pytube
 
-class SayHello(App):
+
+class Numerisateur_Original_Universel_Biochimique(App):
     def build(self):
         self.window = GridLayout()
         self.window.cols = 1
@@ -41,10 +43,12 @@ class SayHello(App):
 
         return self.window
 
-
     def transfert_lien(self, instance):
-        print(self.user.text)
-        telecharger_video(self.user.text)
+        try:
+            print(self.user.text)
+            telecharger_video(self.user.text)
+        except pytube.exceptions.RegexMatchError:
+            print("Erreur de Lien")
 
     
     
@@ -52,4 +56,4 @@ class SayHello(App):
 
 
 if __name__ == "__main__":
-    SayHello().run()
+    Numerisateur_Original_Universel_Biochimique().run()
