@@ -25,6 +25,14 @@ def combiner_audio(video_name, audio_name, out_name):
     final_clip.write_videofile(out_name)
 
 
+def select():
+    video = yt.streams.filter(mime_type="video/mp4")
+    x, liste_video = choix_video(video)
+    # Récupération de la video sélectionnée
+    video = yt.streams.get_by_itag(liste_video[x]["itag"])
+    return video
+    
+
 def audio():
     # Définie la qualité maximale audio en kbps
     qualite_max = 0
@@ -58,6 +66,13 @@ def valider_telechargement():
     # Récupération du/des flux video possédant la meilleure qualité
     qualite_max = str(qualite_max) + "p"
     video = yt.streams.filter(res=qualite_max)
+    x, liste_video = choix_video(video)
+    # Récupération de la video sélectionnée
+    video = yt.streams.get_by_itag(liste_video[x]["itag"])
+    return video
+
+
+def choix_video(video):
     # Création d'une liste de dictionnaires qui stocke les informations importantes à l'utilisateur ainsi qu'un ID pour choisir la video à télécharger
     liste_video = []
     # Pour chaque flux "stream" dans video:
@@ -76,10 +91,7 @@ def valider_telechargement():
                     "\n" + "    FPS :        " + str(liste_video[i]["fps"]) + 
                     "\n" + "    Taille :     " + str(liste_video[i]["taille"]))
     x = int(input("ID de la vidéo à télécharger : "))
-    # Récupération de la video sélectionnée
-    video = yt.streams.get_by_itag(liste_video[x]["itag"])
-
-    return video
+    return (x, liste_video)
     
 
 
@@ -130,7 +142,7 @@ def telecharger_video(url):
         case 'b':
             video = valider_telechargement()
         case 's':
-            print("oui")
+            video = select()
         case 'a':
             audio_for_video = audio()
         case 'e':
@@ -152,7 +164,7 @@ def telecharger_video(url):
         audio_for_video.download(audio_place)'''
         
 
-        combiner_audio(video_place, audio_place, output_place)
+        #combiner_audio(video_place, audio_place, output_place)
         
 
     #video.download()
