@@ -1,29 +1,30 @@
-# ! (code internet) Signifie que le morceau de code est du copier-coller d'internet et qu'il m'est donc difficile d'expliquer comment il fonctionne
 # J'écrit "vidéo" sans accent dans les commentaires mais L'ORTHOGRAPHE IL A CHANGE
 
 # -- Importation des modules --
-from turtle import st
+from email.policy import default
+import re
 from pytube import YouTube
+import pytube.exceptions
 import progressbar as progress
 from colorama import init, Fore
 import ffmpeg
 import os
-from time import sleep
+import subprocess as sp
+import sys
+from moviepy.config import get_setting
+from moviepy.tools import subprocess_call
 # -- Importation des fonctions supplémentaires
 from convertions import *
 
 
-# -- Combine l'audio et la video des fichiers >1080p
-def combiner_audio(video_name, audio_name, out_name):
-    # Importation du module nécessaire
-    import moviepy.editor as mpe
-    # Importe la video et l'audio
-    my_clip = mpe.VideoFileClip(video_name)
-    audio_background = mpe.AudioFileClip(audio_name)
-    # Ajoute l'audio à la vidéo
-    final_clip = my_clip.set_audio(audio_background)
-    # Enregistre la vidéo et l'audio dans le même fichier
-    final_clip.write_videofile(out_name)
+# -- Clear python console --
+clear = lambda: os.system('cls')
+
+
+# -- Fusionne l'audio et la video --
+def fusionner_video_audio(video, audio, output, vcodec='copy', acodec='copy', ffmpeg_output=False, logger = 'bar'):
+    cmd = [get_setting("FFMPEG_BINARY"), "-y", "-i", audio, "-i", video, "-vcodec", vcodec, "-acodec", acodec, output]
+    subprocess_call(cmd, logger = logger)
 
 
 def supprimer_fichier_dossier(dossier):
@@ -57,7 +58,7 @@ def audio():
     return video[0]
 
 
-def valider_telechargement():
+def best():
     # Définie la qualité maximale video en pixel(hauteur)
     qualite_max = 0
     # Pour chaque flux "stream":
@@ -87,25 +88,57 @@ def choix_video(video):
         if stream.mime_type != "audio/mp4" and stream.mime_type != "audio/webm":
             # Ajout d'un dico contenant des infos cool qur la video
             liste_video.append({"type": stream.mime_type, "resolution": stream.resolution, "fps": (str(stream.fps) + "fps"), "taille": poids_video(stream.filesize), "itag": stream.itag})
-    print(liste_video)
+    # Tri décroissant en fonction : resolution, fps, taille
+    liste_video.sort(key=lambda element:(int(element['resolution'][0:-1]), int(element['fps'][0:-3]), float(element['taille'][0:-2])), reverse=True)
     # Affichage des informations pour l'utilisateur sur chaque video et d'un ID pour pouvoir en sélectionner une
+    print("Liste des flux video :")
     for i in range(len(liste_video)):
-        print("Voulez vous télécharger : " +
-                    "\n" + "  ID : " + str(i) + 
+        print(             " ID : " + str(i) + 
                     "\n" + "    Type :       " + str(liste_video[i]["type"]) + 
                     "\n" + "    Résolution : " + str(liste_video[i]["resolution"]) + 
                     "\n" + "    FPS :        " + str(liste_video[i]["fps"]) + 
                     "\n" + "    Taille :     " + str(liste_video[i]["taille"]))
-    print("")
-    x = int(input("ID de la vidéo à télécharger : "))
-    return (x, liste_video)
+    print(" ")
+    x = input("ID de la vidéo à télécharger ((e)xit) : ")
+    if x.lower() == "e":
+        quit()
+    else:
+        return (int(x), liste_video)
+
+
+def telechargement(video):
+    if video.is_progressive == False:
+        audio_for_video = audio()
+
+        file_name = formatage_video_name(audio_for_video.default_filename)
+        video_path = 'video/temp/video_temp'
+        audio_path = 'video/temp/audio_temp'
+
+        
+        print("Téléchargement de l'audio en cours...")
+        audio_for_video.download(output_path=audio_path, filename=file_name)
+        
+        print("Téléchargement de la video en cours...")
+        video.download(output_path=video_path, filename=file_name)
+
+
+        print("Fusion de la video et le l'audio en cours...")
+        fusionner_video_audio((video_path + '/' + file_name), (audio_path + '/' + file_name), ('video/video/' + file_name))
+
+        supprimer_fichier_dossier('video/temp/video_temp')
+        supprimer_fichier_dossier('video/temp/audio_temp')
+    else:
+        file_name = formatage_video_name(video.default_filename)
+        video_path = 'video/temp/video_temp'
+        print("Téléchargement de la video en cours...")
+        video.download(output_path=video_path, filename=file_name)
     
 
 
     
 def telecharger_video(url):
 
-    # -- Barre de Progression -- (principalement code internet)
+    # -- Barre de Progression --
     def progress(streams, chunk: bytes, bytes_remaining: int):
         contentsize = video.filesize
         size = contentsize - bytes_remaining
@@ -120,8 +153,9 @@ def telecharger_video(url):
     yt = YouTube(url, on_progress_callback=progress)
 
     # -- Print tous les flux video
-    for stream in yt.streams:
+    '''for stream in yt.streams:
         print(stream)
+    print(yt.streams.filter(progressive=True))'''
 
         
     # -- Informations --
@@ -139,55 +173,44 @@ def telecharger_video(url):
           Fore.YELLOW + "(s)elect", 
           Fore.BLUE + "(a)udio", 
           Fore.WHITE + "(e)xit")
-    print("'(b)est' est déconseillé s'il s'agit d'une vidéo 2k ou plus car il faut télécharger l'audio, la vidéo, puis combiner les 2.\nVous pouvez quand même le faire, sachez juste que c'est beacoup plus long et que le problème ne vient pas du développeur.")
     choix = input("Choix : ")
+    choix = choix.lower()
 
-
+    while choix not in "bsae":
+        print("Erreur : Option invalide")
+        choix = input("Choix : ")
+        choix = choix.lower()  
 
     # Effectue l'action de la variable "choix"
     match choix:
         case 'b':
-            video = valider_telechargement()
-            print("Téléchargement en cours...")
-            if video.mime_type == "video/webm":
-                video_place = r'video/temp/video_temp/' + formatage_video_name(video.title) + video.resolution + '.webm'
-                audio_place = r'video/temp/audio_temp/' + formatage_video_name(video.title) + video.resolution + '.webm'
-                output_place = r'video/video/' + formatage_video_name(video.title) + video.resolution + '.mp4'
-                print(audio_place + '\n' + video_place + '\n' + output_place)
-                
-                video.download(video_place)
-                audio_for_video = audio()
-                audio_for_video.download(audio_place)
-
-                #combiner_audio(video_place, audio_place, output_place)
-
-                supprimer_fichier_dossier(r"video/temp/audio_temp")
-                supprimer_fichier_dossier(r"video/temp/video_temp")
+            video = best()
+            telechargement(video)
         case 's':
             video = select()
-            video.download(r'video/video/')
+            telechargement(video)
         case 'a':
             video = audio()
             video.download(r'video/audio/')
         case 'e':
             quit()
-
-
-
-    # -- Combine l'audio et la vidéo des fichiers .webm (+1080p), on est obligé de faire ça car Pytube est PAS TRES TRES GENTIL
-    # C'est Très TRES long
     
-
-
-        
 
     #video.download()
 
 
-    print("\nDownload Completed")
+    print("Download Completed")
 
 
 if __name__ == "__main__":
-    url = input("Lien de la video : ")
-    telecharger_video(url)
-    #https://www.youtube.com/watch?v=H-edzEP5xto
+    clear()
+    print("Si la lecture de la video de fonctionne pas utilisez VLC Media Player\nhttps://www.videolan.org/vlc/download-windows.html")
+    try:
+        url = input("Lien de la video : ")
+        telecharger_video(url)
+        #https://www.youtube.com/watch?v=H-edzEP5xto
+        supprimer_fichier_dossier('video/temp/video_temp')
+    except pytube.exceptions.RegexMatchError:
+        clear()
+        print("Erreur : Lien invalide !")
+        

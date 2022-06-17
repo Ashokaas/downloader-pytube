@@ -21,6 +21,11 @@ def poids_video(poids:int):
 
 # -- Rend le nom de la video plus lisible
 def formatage_video_name(video_name:str):
+    for a in range(len(video_name)):
+        if video_name[a] == ".":
+            extension = video_name[a:-1] + video_name[-1]
+            break
+    print(extension)
     video_name = video_name.lower()
     video_name_nouv = ""
     for i in range(len(video_name)):
@@ -34,8 +39,8 @@ def formatage_video_name(video_name:str):
         else:
             video_name_nouv_nouv += video_name_nouv[e] + "_"
 
-    return video_name_nouv_nouv
+    return video_name_nouv_nouv[0: -len(extension)] + extension
 
 if __name__ == "__main__":
     print(poids_video(369864896))
-    print(formatage_video_name("VOITURES : Bientôt INTERDITES en FRANCE ! 🚗🚫"))
+    print(formatage_video_name("VOITURES : Bientôt INTERDITES en FRANCE ! 🚗🚫.webm"))
