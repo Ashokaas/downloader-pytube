@@ -1,8 +1,39 @@
 from tkinter import * 
 
-fenetre = Tk()
+window = Tk()
 
-label = Label(fenetre, text="Hello World")
-label.pack()
 
-fenetre.mainloop()
+background_color = '#191919'
+text_color = '#FFF'
+
+# -- Parametres de la fenetre
+window.title("Numérisateur Original Universel Biochimique")
+window.geometry("720x480")
+window.resizable(width=False, height=False)
+window.config(background=background_color)
+window.iconbitmap('youtube.ico')
+
+
+frame_link = Frame(window, bg=background_color, bd=1, relief=SUNKEN)
+
+from main import *
+def oui():
+    telecharger_video(input_link.get())
+    
+
+# -- Frame Lien video
+label_link = Label(frame_link, text="Lien de la vidéo :", font=("Roboto", 15), bg=background_color, fg=text_color)
+label_link.pack()
+
+button_link = Button(frame_link, text="Convertir", font=("Roboto", 15), bg='white', fg=background_color, command=oui)
+button_link.pack(pady=25, fill=X)
+
+input_link = Entry(frame_link)
+input_link.pack()
+
+frame_link.pack()
+
+
+
+# -- Affichage de la fenêtre
+window.mainloop()
