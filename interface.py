@@ -35,5 +35,18 @@ frame_link.pack()
 
 
 
+frame_bottom = Frame(window, bg='#E0E0E0', height=250)
+frame_bottom.grid(column=0, columnspan=2, row=1, padx=5, pady=5)
+frame_bottom.pack_propagate(False)
+# ==== Setup de l'output log ====
+# Ajouter du texte facilement car il faut autoriser la modification dans le widget avant de pouvoir insérer du texte
+
+
+
+# -- Frame pour chaque source video
+#for i in range(len(liste video))
+
+
+
 # -- Affichage de la fenêtre
 window.mainloop()

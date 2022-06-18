@@ -22,10 +22,11 @@ class Numerisateur_Original_Universel_Biochimique(App):
         self.window.cols = 1
         self.window.size_hint = (0.6, 0.7)
         self.window.pos_hint = {"center_x": 0.5, "center_y": 0.5}
+        self.icon = "youtube.png"
         #add widgets to window
 
         #image widget
-        self.window.add_widget(Image(source="logo.jpg"))
+        #self.window.add_widget(Image(source="logo.jpg"))
 
         #label widget
         self.greeting = Label(text="Lien de la vidéo :", font_size = 18, color='#00FFCE')
