@@ -1,20 +1,2 @@
 video
 __pycache__
-
-def video_progressive_false(video):
-    print(video.default_filename)
-    video_place = r'video/temp/video_temp/'
-    audio_place = r'video/temp/audio_temp/'
-    sortie = r'video/video/' + formatage_video_name(video.title) + video.resolution + '.mp4'
-    print(audio_place + '\n' + video_place + '\n' + sortie)
-
-    file_name = formatage_video_name(video.title) + video.resolution
-    
-    video.download(output_place=video_place, filename=file_name)
-    audio_for_video = audio()
-    audio_for_video.download(output_place=audio_place, filename=file_name)
-
-    combiner_audio(video_place+file_name, audio_place+file_name, sortie)
-
-    supprimer_fichier_dossier(r"video/temp/audio_temp")
-    supprimer_fichier_dossier(r"video/temp/video_temp")
