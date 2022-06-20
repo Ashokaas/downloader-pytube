@@ -41,6 +41,37 @@ def formatage_video_name(video_name:str):
 
     return video_name_nouv_nouv[0: -len(extension)] + extension
 
+
+def nb_vues(vues):
+    vues = str(vues)[::-1]
+    vues_return = ""
+    x = 0
+    for i in range(len(vues)):
+        if i % 3 == 0 and i != 0:
+            vues_return += " "
+        vues_return += vues[i]
+
+    vues_return = vues_return[::-1]
+    return vues_return
+
+
+def titre_ligne(titre):
+    titre = titre.split()
+    titre_return = ""
+    titre_temp = ""
+    x = 0
+    for i in range(len(titre)):
+        if len(titre_return) > 30 and x > 5:
+            titre_return += '\n'
+            x = 0
+        x += 1
+        titre_return += titre[i] + " "
+        
+    return titre_return
+        
+
 if __name__ == "__main__":
     print(poids_video(369864896))
     print(formatage_video_name("VOITURES : Bientôt INTERDITES en FRANCE ! 🚗🚫.webm"))
+    print(nb_vues(4973330999))
+    print(titre_ligne("Rick Astley - Never Gonna Give You Up (Official Music Video)"))

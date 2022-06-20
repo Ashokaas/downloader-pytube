@@ -21,6 +21,16 @@ from convertions import *
 clear = lambda: os.system('cls')
 
 
+# -- Informations vidéo --
+def informations_video(yt):
+    info_video = {}
+    info_video["titre"] = titre_ligne(yt.title)
+    info_video["chaine"] = yt.author
+    info_video["vues"] = nb_vues(yt.views)
+    info_video["duree"] = duree(yt.length)
+    info_video['url_minia'] = yt.thumbnail_url
+    return info_video
+
 # -- Fusionne l'audio et la video --
 def fusionner_video_audio(video, audio, output, vcodec='copy', acodec='copy', ffmpeg_output=False, logger = 'bar'):
     cmd = [get_setting("FFMPEG_BINARY"), "-y", "-i", audio, "-i", video, "-vcodec", vcodec, "-acodec", acodec, output]
@@ -157,21 +167,15 @@ def telecharger_video(url):
         print(stream)
     print(yt.streams.filter(progressive=True))'''
 
-        
-    # -- Informations --
-    print("")
-    print("Titre : " + yt.title)
-    print("Chaîne : " + yt.author)
-    print("Vues : " + str(yt.views))
-    print("Durée : " + duree(yt.length))
+
 
 
     # -- Qualité --
     print("")
     print(Fore.RED + "Téléchargement :")
-    print(Fore.GREEN + "(b)est", 
-          Fore.YELLOW + "(s)elect", 
-          Fore.BLUE + "(a)udio", 
+    print(Fore.GREEN + "(b)est",
+          Fore.YELLOW + "(s)elect",
+          Fore.BLUE + "(a)udio",
           Fore.WHITE + "(e)xit")
     choix = input("Choix : ")
     choix = choix.lower()
@@ -209,6 +213,7 @@ if __name__ == "__main__":
         url = input("Lien de la video : ")
         telecharger_video(url)
         #https://www.youtube.com/watch?v=H-edzEP5xto
+        #https://www.youtube.com/watch?v=dQw4w9WgXcQ
         supprimer_fichier_dossier('video/temp/video_temp')
     except pytube.exceptions.RegexMatchError:
         clear()
