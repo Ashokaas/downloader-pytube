@@ -6,6 +6,7 @@ from pytube import YouTube
 from urllib.request import urlretrieve
 
 
+
 # == FONCTIONS ==
 def info_video():
     
@@ -16,13 +17,18 @@ def info_video():
     img = ImageTk.PhotoImage(Image.open('video/temp/minia_temp/img.jpg').resize((4*38, 3*38)))
     miniature["image"] = img
 
-    label_titre["text"] = dico["titre"]
+    label_titre["text"] = "Titre : " + dico["titre"]
 
-    label_chaine["text"] = dico["chaine"]
+    label_chaine["text"] = "Chaîne : " + dico["chaine"]
 
-    label_vues["text"] = dico["vues"]
+    label_vues["text"] = "Vues : " + dico["vues"]
 
-    label_duree["text"] = dico["duree"]
+    label_duree["text"] = "Durée : " + dico["duree"]
+
+
+
+def clear_entry():
+    entry_link.delete(0, 'end')
 
 
 
@@ -61,6 +67,9 @@ label_link.pack()
 entry_link = Entry(tab1, width=50)
 entry_link.pack()
 
+button = Button(tab1, text="❌", command=clear_entry)
+button.pack()
+
 button_link = Button(tab1, text="Convertir", command=info_video)
 button_link.pack()
 
@@ -68,23 +77,29 @@ button_link.pack()
 
 # -- Frame : information --
 information = Frame(root)
+information.config(width=270)
+information.pack_propagate(False)
 information.pack(side=RIGHT, fill="both")
 
-
+    # Label Info
+label_info = Label(information, text="Informations de la vidéo :", pady=15)
+label_info.pack()
+    # Miniature
 miniature = Label(information, image=None, pady=20)
 miniature.pack()
-
-label_titre = Label(information, text=("Titre : "))
+    # Titre
+label_titre = Label(information, text=None, pady=6)
 label_titre.pack()
-
-label_chaine = Label(information, text=("Chaîne : "))
+    # Chaine
+label_chaine = Label(information, text=None, pady=6)
 label_chaine.pack()
-
-label_vues = Label(information, text=("Vues : "))
+    #Vues
+label_vues = Label(information, text=None, pady=6)
 label_vues.pack()
-
-label_duree = Label(information, text=("Durée : "))
+    # Duree
+label_duree = Label(information, text=None, pady=6)
 label_duree.pack()
+
 
 
 # Affichage de la fenêtre
