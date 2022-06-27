@@ -18,6 +18,8 @@ from convertions import *
 
 
 
+sortie = r"C:\Users\antot\Desktop"
+
 
 # J'écrit "vidéo" sans accent dans les commentaires mais L'ORTHOGRAPHE IL A CHANGE
 
@@ -27,7 +29,14 @@ from convertions import *
 # -- Clear python console --
 clear = lambda: os.system('cls')
 
+def clear_entry():
+    entry_link.delete(0, 'end')
 
+def copy(event):
+    lien = str(entry_link.clipboard_get())
+    if "youtube" in lien:
+        clear_entry()
+        entry_link.insert(0, lien)
 
 
 # -- Fusionne l'audio et la video --
@@ -40,6 +49,8 @@ def fusionner_video_audio(video,audio,output, vcodec='copy',
              "-vcodec", vcodec, "-acodec", acodec, output]
              
     call(cmd)
+
+
 
 
 def supprimer_fichier_dossier(dossier):
@@ -82,16 +93,21 @@ def choix_video(video):
     # Tri décroissant en fonction : resolution, fps, taille
     liste_video.sort(key=lambda element:(int(element['resolution'][0:-1]), int(element['fps'][0:-3]), float(element['taille'][0:-2])), reverse=True)
     # Affichage des informations pour l'utilisateur sur chaque video et d'un ID pour pouvoir en sélectionner une
-    print("Liste des flux video :")
     global id
     id = IntVar()
+    colonne = 0
+    ligne = 0
+    print(len(liste_video))
     for i in range(len(liste_video)):
-        Label(tab2, text=("ID" + str(i))).grid(column=0, row=i)
-        Label(tab2, text=liste_video[i]["type"]).grid(column=1, row=i)
-        Label(tab2, text=liste_video[i]["resolution"]).grid(column=2, row=i)
-        Label(tab2, text=liste_video[i]["fps"]).grid(column=3, row=i)
-        Label(tab2, text=liste_video[i]["taille"]).grid(column=4, row=i)
-        Radiobutton(tab2, variable=id, value=liste_video[i]["itag"]).grid(column=5, row=i)
+        if i > 12:
+            colonne = 6
+            ligne = -13
+        Label(tab2, text=("ID" + str(i))).grid(column=0+colonne, row=i+ligne)
+        Label(tab2, text=liste_video[i]["type"]).grid(column=1+colonne, row=i+ligne)
+        Label(tab2, text=liste_video[i]["resolution"]).grid(column=2+colonne, row=i+ligne)
+        Label(tab2, text=liste_video[i]["fps"]).grid(column=3+colonne, row=i+ligne)
+        Label(tab2, text=liste_video[i]["taille"]).grid(column=4+colonne, row=i+ligne)
+        Radiobutton(tab2, variable=id, value=liste_video[i]["itag"]).grid(column=5+colonne, row=i+ligne)
 
     return liste_video, i
     
@@ -125,15 +141,15 @@ def telechargement(video):
         video.download(output_path=video_path, filename=file_name)
 
         print("Fusion de la video et de l'audio en cours...")
-        fusionner_video_audio((video_path + '/' + file_name), (audio_path + '/' + file_name), ('video/video/' + file_name))
+        fusionner_video_audio((video_path + '/' + file_name), (audio_path + '/' + file_name), (sortie + '/' + file_name))
 
-        #supprimer_fichier_dossier('video/temp/video_temp')
-        #supprimer_fichier_dossier('video/temp/audio_temp')
+        supprimer_fichier_dossier('video/temp/video_temp')
+        supprimer_fichier_dossier('video/temp/audio_temp')
     else:
         file_name = formatage_video_name(video.default_filename)
         video_path = 'video/temp/video_temp'
         print("Téléchargement de la video en cours...")
-        video.download(output_path=video_path, filename=file_name)
+        video.download(output_path=sortie + '/', filename=file_name)
     
 
 
@@ -141,17 +157,21 @@ def telechargement(video):
     
  # -- Convertir vidéo --
 def convertir_video():
-    
-
 
     def telecharger():
         telechargement(yt.streams.get_by_itag(id.get()))
 
     global yt
     
+
+    if "youtube" not in entry_link.get():
+        clear_entry()
+        return print("Erreur de lien")
+
     yt = YouTube(entry_link.get())
+
     for stream in yt.streams:
-            print(stream)
+        print(stream)
 
     urlretrieve(yt.thumbnail_url, 'video/temp/minia_temp/img.jpg')
     global img
@@ -162,13 +182,13 @@ def convertir_video():
     label_vues["text"] = "Vues : " + nb_vues(yt.views)
     label_duree["text"] = "Durée : " + duree(yt.length)
 
-    video = yt.streams.filter(mime_type="video/mp4")
+    video = yt.streams
     liste_video, i = choix_video(video)
 
-    entry_id = Entry(tab2, width=3)
-    entry_id.grid(column=0, row=i+1)
     button_id = Button(tab2, text='Télécharger', command=telecharger)
     button_id.grid(column=1, row=i+1)
+
+    tabControl.select(tab2)
 
 
     
@@ -177,12 +197,7 @@ def convertir_video():
 # == FIN FONCTIONS ==
 
 
-def clear_entry():
-    entry_link.delete(0, 'end')
 
-def copy(event):
-    clear_entry()
-    entry_link.insert(0, str(entry_link.clipboard_get()))
 
 # -- Configuration de la fenêtre
 root = Tk()
@@ -201,13 +216,18 @@ tabControl = ttk.Notebook(root)
 
 tab1 = Frame(tabControl)
 tab2 = Frame(tabControl)
+tab3 = Frame(tabControl)
 
 style_menu = ttk.Style()
 style_menu.configure('TNotebook.Tab', font='Calibri 11')
 
 tabControl.add(tab1, text ='Vidéo')
 tabControl.add(tab2, text ='Options de téléchargement')
+tabControl.add(tab3, text = 'Paramètres')
+
 tabControl.pack(expand = 1, fill ="both", side=LEFT)
+
+tabControl.select(tab1)
 
 
 
@@ -223,10 +243,10 @@ entry_link.bind("<Button - 3>", copy)
 button_delete = Button(tab1, text="❌", command=clear_entry)
 button_delete.grid(column=1, row=1)
 
-
-
 button_link = Button(tab1, text="Convertir", command=convertir_video)
 button_link.grid(column=0, row=2)
+
+label_erreur = Label(tab1, text="Erreur : ")
 
 tab1.columnconfigure(0, weight=1)
 
