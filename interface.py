@@ -100,7 +100,6 @@ def choix_video(video):
     id = IntVar()
     colonne = 0
     ligne = 0
-    print(len(liste_video))
     for i in range(len(liste_video)):
         if i > 12:
             colonne = 6
@@ -189,12 +188,18 @@ def convertir_video():
     label_chaine["text"] = "Chaîne : " + yt.author
     label_vues["text"] = "Vues : " + nb_vues(yt.views)
     label_duree["text"] = "Durée : " + duree(yt.length)
+    like = yt.initial_data['contents']['twoColumnWatchNextResults']['results']['results']['contents'][0]['videoPrimaryInfoRenderer']['videoActions']['menuRenderer']['topLevelButtons'][0]['toggleButtonRenderer']['defaultText']['simpleText']
+    dislike = yt.initial_data['contents']['twoColumnWatchNextResults']['results']['results']['contents'][0]['videoPrimaryInfoRenderer']['videoActions']['menuRenderer']['topLevelButtons'][1]['toggleButtonRenderer']['defaultText']['simpleText']
+    print(like + '\n' + dislike)
+    print(yt.initial_data['contents']['twoColumnWatchNextResults']['results']['results']['contents'][0]['videoPrimaryInfoRenderer']['videoActions']['menuRenderer']['topLevelButtons'])
+    ratio.create_line(0, 0, 100, 0, fill="blue", width=7)
+    ratio.create_line(100, 0, 200, 0, fill="red", width=7)
 
     video = yt.streams
     liste_video, i = choix_video(video)
 
-    button_id = Button(tab2, text='Télécharger', command=telecharger)
-    button_id.grid(column=1, row=i+1)
+    button_id = Button(information, text='Télécharger', command=telecharger, pady=4, padx=9)
+    button_id.pack(pady=20)
 
     tabControl.select(tab2)
 
@@ -219,7 +224,7 @@ root.title("Numérisateur Original Universel Biochimique 2")
 
 root.resizable(False, False)
 
-hauteur = 400
+hauteur = 500
 largeur = 800
 root.geometry(str(largeur) + 'x' + str(hauteur))
 
@@ -255,14 +260,14 @@ entry_link.grid(column=0, row=1)
 entry_link.bind("<Button - 3>", copy)
 
 button_delete = Button(tab1, text="❌", command=clear_entry)
-button_delete.grid(column=1, row=1, sticky="w")
+button_delete.grid(column=1, row=1)
 
 button_link = Button(tab1, text="Convertir", command=convertir_video)
 button_link.grid(column=0, row=2)
 
 label_erreur = Label(tab1, text="Erreur : ")
 
-# tab1.columnconfigure(0, weight=1)
+tab1.columnconfigure(0, weight=1)
 
 
 # -- Frame : information --
@@ -276,19 +281,23 @@ label_info = Label(information, text="Informations de la vidéo :", pady=15)
 label_info.pack()
     # Miniature
 miniature = Label(information, image=None)
-miniature.pack()
+miniature.pack(pady=10)
     # Titre
-label_titre = Label(information, text=None, pady=6)
-label_titre.pack()
+label_titre = Label(information, text=None)
+label_titre.pack(pady=5)
     # Chaine
-label_chaine = Label(information, text=None, pady=6)
-label_chaine.pack()
+label_chaine = Label(information, text=None)
+label_chaine.pack(pady=5)
     #Vues
-label_vues = Label(information, text=None, pady=6)
-label_vues.pack()
+label_vues = Label(information, text=None)
+label_vues.pack(pady=5)
     # Duree
-label_duree = Label(information, text=None, pady=6)
-label_duree.pack()
+label_duree = Label(information, text=None)
+label_duree.pack(pady=5)
+    # Pouces bleus/rouges
+ratio = Canvas(information, width=200, height=3.5, bd=0, highlightthickness=0)
+ratio.pack()
+
 
 
 # -- Frame: Paramètres --
