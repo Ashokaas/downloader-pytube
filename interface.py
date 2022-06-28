@@ -1,10 +1,12 @@
+import subprocess
 from tkinter import *
 from tkinter import ttk
+from tkinter import filedialog
 from PIL import ImageTk, Image
 from pytube import YouTube
 from urllib.request import urlretrieve
 import pytube.exceptions
-import progressbar as progress
+# import progressbar as progress
 from colorama import init, Fore
 import os
 import subprocess as sp
@@ -18,7 +20,8 @@ from convertions import *
 
 
 
-sortie = r"C:\Users\antot\Desktop"
+sortie = os.path.expanduser('~') + r"\Desktop"
+print(sortie)
 
 
 # J'écrit "vidéo" sans accent dans les commentaires mais L'ORTHOGRAPHE IL A CHANGE
@@ -150,6 +153,9 @@ def telechargement(video):
         video_path = 'video/temp/video_temp'
         print("Téléchargement de la video en cours...")
         video.download(output_path=sortie + '/', filename=file_name)
+
+    print(sortie)
+    subprocess.Popen(r'explorer /select,"' + sortie.replace('/', '\\') + '\\' + file_name + r'"')
     
 
 
@@ -159,6 +165,8 @@ def telechargement(video):
 def convertir_video():
 
     def telecharger():
+        global sortie
+        sortie = entry_chemin_destination.get()
         telechargement(yt.streams.get_by_itag(id.get()))
 
     global yt
@@ -189,6 +197,12 @@ def convertir_video():
     button_id.grid(column=1, row=i+1)
 
     tabControl.select(tab2)
+
+def dialogue_chemin():
+    global sortie
+    sortie = filedialog.askdirectory()
+    entry_chemin_destination.delete(0, len(entry_chemin_destination.get()))
+    entry_chemin_destination.insert(0, sortie)
 
 
     
@@ -241,14 +255,14 @@ entry_link.grid(column=0, row=1)
 entry_link.bind("<Button - 3>", copy)
 
 button_delete = Button(tab1, text="❌", command=clear_entry)
-button_delete.grid(column=1, row=1)
+button_delete.grid(column=1, row=1, sticky="w")
 
 button_link = Button(tab1, text="Convertir", command=convertir_video)
 button_link.grid(column=0, row=2)
 
 label_erreur = Label(tab1, text="Erreur : ")
 
-tab1.columnconfigure(0, weight=1)
+# tab1.columnconfigure(0, weight=1)
 
 
 # -- Frame : information --
@@ -275,6 +289,15 @@ label_vues.pack()
     # Duree
 label_duree = Label(information, text=None, pady=6)
 label_duree.pack()
+
+
+# -- Frame: Paramètres --
+entry_chemin_destination = Entry(tab3, width=0)
+entry_chemin_destination.grid(column=0, row=0, padx=(10, 5), pady=(10, 0))
+entry_chemin_destination.insert(0, sortie)
+
+selec_chemin_destination = Button(tab3, text="Parcourir", command=dialogue_chemin)
+selec_chemin_destination.grid(column=1, row=0, pady=(10, 0))
 
 
 
