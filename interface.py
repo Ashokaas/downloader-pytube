@@ -12,6 +12,9 @@ import os
 import subprocess as sp
 from moviepy.config import get_setting
 from subprocess import call
+# likes dislikes
+import requests
+import json
 # -- Importation des fonctions supplémentaires
 from convertions import *
 
@@ -61,7 +64,21 @@ def supprimer_fichier_dossier(dossier):
         os.remove(dossier + "/" + fichier)
 
 
+def get_likes_and_dislikes(video_url):
+    main_api = "https://returnyoutubedislikeapi.com/votes?videoId="
 
+    _video_ID = video_url.replace("https://youtu.be/", "")
+    _video_ID = _video_ID.replace("https://youtube.com/watch?v=", "")
+    _video_ID = _video_ID.replace("https://www.youtu.be/", "")
+    _video_ID = _video_ID.replace("https://www.youtube.com/watch?v=", "")
+    _video_ID = _video_ID.replace("&feature=share", "")
+    
+    video_id = _video_ID
+
+    res = requests.get(main_api + video_id)
+    response = json.loads(res.text)
+
+    return response["likes"], response["dislikes"], response["likes"]+response["dislikes"]
     
 
 def audio(yt):
@@ -188,12 +205,15 @@ def convertir_video():
     label_chaine["text"] = "Chaîne : " + yt.author
     label_vues["text"] = "Vues : " + nb_vues(yt.views)
     label_duree["text"] = "Durée : " + duree(yt.length)
-    like = yt.initial_data['contents']['twoColumnWatchNextResults']['results']['results']['contents'][0]['videoPrimaryInfoRenderer']['videoActions']['menuRenderer']['topLevelButtons'][0]['toggleButtonRenderer']['defaultText']['simpleText']
-    dislike = yt.initial_data['contents']['twoColumnWatchNextResults']['results']['results']['contents'][0]['videoPrimaryInfoRenderer']['videoActions']['menuRenderer']['topLevelButtons'][1]['toggleButtonRenderer']['defaultText']['simpleText']
-    print(like + '\n' + dislike)
-    print(yt.initial_data['contents']['twoColumnWatchNextResults']['results']['results']['contents'][0]['videoPrimaryInfoRenderer']['videoActions']['menuRenderer']['topLevelButtons'])
-    ratio.create_line(0, 0, 100, 0, fill="blue", width=7)
-    ratio.create_line(100, 0, 200, 0, fill="red", width=7)
+    
+    likes, dislikes, somme = get_likes_and_dislikes(entry_link.get())
+    print(likes, dislikes, somme)
+    ratio.create_line(0, 0, likes/somme*200, 0, fill="blue", width=7)
+    ratio.create_line(likes/somme*200, 0, (likes/somme)*200+(dislikes/somme)*200, 0, fill="red", width=7)
+
+    label_likes["text"] = likes
+    
+    label_dislikes["text"] = dislikes
 
     video = yt.streams
     liste_video, i = choix_video(video)
@@ -296,7 +316,13 @@ label_duree = Label(information, text=None)
 label_duree.pack(pady=5)
     # Pouces bleus/rouges
 ratio = Canvas(information, width=200, height=3.5, bd=0, highlightthickness=0)
-ratio.pack()
+ratio.pack(pady=10)
+    # Likes
+label_likes = Label(information, text=None)
+label_likes.pack()
+    # Dislikes
+label_dislikes = Label(information, text=None)
+label_dislikes.pack()
 
 
 
