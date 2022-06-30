@@ -180,48 +180,62 @@ def telechargement(video):
  # -- Convertir vidéo --
 def convertir_video():
 
-    def telecharger():
-        global sortie
-        sortie = entry_chemin_destination.get()
-        telechargement(yt.streams.get_by_itag(id.get()))
+    try:
 
-    global yt
-    
+        def telecharger():
+            global sortie
+            sortie = entry_chemin_destination.get()
+            telechargement(yt.streams.get_by_itag(id.get()))
 
-    if "youtube" not in entry_link.get():
-        clear_entry()
-        return print("Erreur de lien")
+        global yt
+        
 
-    yt = YouTube(entry_link.get())
+        yt = YouTube(entry_link.get())
 
-    for stream in yt.streams:
-        print(stream)
+        for stream in yt.streams:
+            print(stream)
 
-    urlretrieve(yt.thumbnail_url, 'video/temp/minia_temp/img.jpg')
-    global img
-    img = ImageTk.PhotoImage(Image.open('video/temp/minia_temp/img.jpg').resize((4*38, 3*38)))
-    miniature["image"] = img
-    label_titre["text"] = "Titre : " + titre_ligne(yt.title)
-    label_chaine["text"] = "Chaîne : " + yt.author
-    label_vues["text"] = "Vues : " + nb_vues(yt.views)
-    label_duree["text"] = "Durée : " + duree(yt.length)
-    
-    likes, dislikes, somme = get_likes_and_dislikes(entry_link.get())
-    print(likes, dislikes, somme)
-    ratio.create_line(0, 0, likes/somme*200, 0, fill="blue", width=7)
-    ratio.create_line(likes/somme*200, 0, (likes/somme)*200+(dislikes/somme)*200, 0, fill="red", width=7)
+        urlretrieve(yt.thumbnail_url, 'video/temp/minia_temp/img.jpg')
+        global img
+        img = ImageTk.PhotoImage(Image.open('video/temp/minia_temp/img.jpg').resize((4*38, 3*38)))
+        miniature["image"] = img
+        label_titre["text"] = "Titre : " + titre_ligne(yt.title)
+        label_chaine["text"] = "Chaîne : " + yt.author
+        label_vues["text"] = "Vues : " + nb_vues(yt.views)
+        label_duree["text"] = "Durée : " + duree(yt.length)
+        
+        likes, dislikes, somme = get_likes_and_dislikes(entry_link.get())
+        print(likes, dislikes, somme)
+        ratio.create_line(0, 0, likes/somme*200, 0, fill="blue", width=7)
+        ratio.create_line(likes/somme*200, 0, (likes/somme)*200+(dislikes/somme)*200, 0, fill="red", width=7)
 
-    label_likes["text"] = likes
-    
-    label_dislikes["text"] = dislikes
+        label_likes["fg"] = 'blue'
+        label_likes["text"] = likes
 
-    video = yt.streams
-    liste_video, i = choix_video(video)
+        label_pourcentages_likes["text"] = str(round(likes/somme*100)) + '%'
+        label_pourcentages_likes["fg"] = 'blue'
+        
+        label_dislikes["fg"] = 'red'
+        label_dislikes["text"] = dislikes
 
-    button_id = Button(information, text='Télécharger', command=telecharger, pady=4, padx=9)
-    button_id.pack(pady=20)
+        label_pourcentages_dislikes["text"] = str(round(dislikes/somme*100)) + '%'
+        label_pourcentages_dislikes["fg"] = 'red'
 
-    tabControl.select(tab2)
+        video = yt.streams
+        liste_video, i = choix_video(video)
+
+        button_id = Button(information, text='Télécharger', command=telecharger, pady=4, padx=9)
+        button_id.pack(pady=20)
+
+        tabControl.select(tab2)
+
+
+    except pytube.exceptions.RegexMatchError:
+        label_erreur["text"] = 'Erreur de lien'
+        print("oui")
+
+
+
 
 def dialogue_chemin():
     global sortie
@@ -240,7 +254,8 @@ def dialogue_chemin():
 
 # -- Configuration de la fenêtre
 root = Tk()
-root.title("Numérisateur Original Universel Biochimique 2")  
+root.title("Numérisateur Original Universel Biochimique 2") 
+root.iconbitmap('images/youtube.ico')
 
 root.resizable(False, False)
 
@@ -268,6 +283,11 @@ tabControl.pack(expand = 1, fill ="both", side=LEFT)
 
 tabControl.select(tab1)
 
+def touche_convertir(event):
+    convertir_video()
+
+root.bind('<Return>', touche_convertir)
+
 
 
 # -- Frame : tab1 -> root
@@ -282,10 +302,11 @@ entry_link.bind("<Button - 3>", copy)
 button_delete = Button(tab1, text="❌", command=clear_entry)
 button_delete.grid(column=1, row=1)
 
-button_link = Button(tab1, text="Convertir", command=convertir_video)
-button_link.grid(column=0, row=2)
+button_link = Button(tab1, text="Convertir", command=convertir_video, padx=13, pady=6)
+button_link.grid(column=0, row=2, pady=15)
 
-label_erreur = Label(tab1, text="Erreur : ")
+label_erreur = Label(tab1, text=None, fg='red')
+label_erreur.grid(column=0, row=3)
 
 tab1.columnconfigure(0, weight=1)
 
@@ -317,12 +338,21 @@ label_duree.pack(pady=5)
     # Pouces bleus/rouges
 ratio = Canvas(information, width=200, height=3.5, bd=0, highlightthickness=0)
 ratio.pack(pady=10)
-    # Likes
+    # Likes / Dislikes
+        # Likes 
+            # Likes
 label_likes = Label(information, text=None)
 label_likes.pack()
-    # Dislikes
+            # Pourcentage Likes
+label_pourcentages_likes = Label(information, text=None)
+label_pourcentages_likes.pack()
+        # Dislikes
+            # Dislikes
 label_dislikes = Label(information, text=None)
 label_dislikes.pack()
+            # Pourcentage Dislikes
+label_pourcentages_dislikes = Label(information, text=None)
+label_pourcentages_dislikes.pack()
 
 
 
@@ -338,4 +368,6 @@ selec_chemin_destination.grid(column=1, row=0, pady=(10, 0))
 
 
 # Affichage de la fenêtre
-root.mainloop()
+if __name__ == "__main__":
+    root.mainloop()
+    
