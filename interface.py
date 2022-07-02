@@ -225,7 +225,7 @@ def convertir_video():
         liste_video, i = choix_video(video)
 
         button_id = Button(information, text='Télécharger', command=telecharger, pady=4, padx=9)
-        button_id.pack(pady=20)
+        button_id.pack(pady=(0, 50), side='bottom')
 
         tabControl.select(tab2)
 
@@ -342,17 +342,17 @@ ratio.pack(pady=10)
         # Likes 
             # Likes
 label_likes = Label(information, text=None)
-label_likes.pack()
+label_likes.pack(side='left', anchor='n', padx=(35, 0))
             # Pourcentage Likes
 label_pourcentages_likes = Label(information, text=None)
-label_pourcentages_likes.pack()
+label_pourcentages_likes.pack(side='left', anchor='n')
         # Dislikes
             # Dislikes
 label_dislikes = Label(information, text=None)
-label_dislikes.pack()
+label_dislikes.pack(side='right', anchor='n', padx=(0, 35))
             # Pourcentage Dislikes
 label_pourcentages_dislikes = Label(information, text=None)
-label_pourcentages_dislikes.pack()
+label_pourcentages_dislikes.pack(side='right', anchor='n')
 
 
 
