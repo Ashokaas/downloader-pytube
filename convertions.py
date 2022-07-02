@@ -61,17 +61,21 @@ def titre_ligne(titre):
     titre_temp = ""
     x = 0
     for i in range(len(titre)):
-        if len(titre_return) > 30 and x > 5:
+        if len(titre_return) > 25 and x > 3:
             titre_return += '\n'
             x = 0
         x += 1
         titre_return += titre[i] + " "
         
     return titre_return
+
+
         
 
 if __name__ == "__main__":
-    print(poids_video(369864896))
-    print(formatage_video_name("VOITURES : Bientôt INTERDITES en FRANCE ! 🚗🚫.webm"))
-    print(nb_vues(4973330999))
-    print(titre_ligne("Rick Astley - Never Gonna Give You Up (Official Music Video)"))
+    #print(poids_video(369864896))
+    #print(formatage_video_name("VOITURES : Bientôt INTERDITES en FRANCE ! 🚗🚫.webm"))
+    #print(nb_vues(4973330999))
+    #print(titre_ligne("Rick Astley - Never Gonna Give You Up (Official Music Video)"))
+    titre = "Pourquoi les consoles portables manquent au jeu vidéo | Débat & Opinion"
+    print(titre_ligne(titre))
