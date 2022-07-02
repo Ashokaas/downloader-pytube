@@ -198,7 +198,7 @@ def convertir_video():
 
         urlretrieve(yt.thumbnail_url, 'video/temp/minia_temp/img.jpg')
         global img
-        img = ImageTk.PhotoImage(Image.open('video/temp/minia_temp/img.jpg').resize((4*38, 3*38)).crop([0, 10, ]))
+        img = ImageTk.PhotoImage(Image.open('video/temp/minia_temp/img.jpg').resize(4*38, 3*38))
         miniature["image"] = img
         label_titre["text"] = "Titre : " + titre_ligne(yt.title)
         label_chaine["text"] = "Chaîne : " + yt.author
