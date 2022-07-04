@@ -198,7 +198,7 @@ def convertir_video():
 
         urlretrieve(yt.thumbnail_url, 'video/temp/minia_temp/img.jpg')
         global img
-        img = ImageTk.PhotoImage(Image.open('video/temp/minia_temp/img.jpg').resize((4*38, 3*38)).crop([0, 10, ]))
+        img = ImageTk.PhotoImage(Image.open('video/temp/minia_temp/img.jpg').crop((0, 60, 640, 480-60)).resize((16*13, 9*13)))
         miniature["image"] = img
         label_titre["text"] = "Titre : " + titre_ligne(yt.title)
         label_chaine["text"] = "Chaîne : " + yt.author
@@ -228,22 +228,18 @@ def convertir_video():
         button_id = Button(information, text='Télécharger', command=telecharger, pady=4, padx=9)
         button_id.pack(pady=(0, 50), side='bottom')
 
-        hVar1 = DoubleVar()
-        hVar2 = DoubleVar()
-        rs1 = RangeSliderH(tab2,[hVar1, hVar2], padX=11, 
-                            bgColor='#F0F0F0',
-                            bar_color_inner='#232323',
-                            bar_color_outer='#7F7F7F',
-                            line_color='#585858',
-                            line_s_color='black',
-                            min_val=1,
-                            max_val=20,
-                            digit_precision='.0f',
-                            Width=300,
-                            Height=64)
-        
-        rs1.grid(column=0, row=i+1, columnspan=(i//12+1)*12)
 
+        select_time = Frame(tab2)
+        select_time.grid(column=0, row=i+1, columnspan=(i//12+1)*12)
+
+        combobox_heures = ttk.Combobox(select_time, values=[i for i in range(24)], width=2)
+        combobox_heures.grid(column=0, row=0)
+
+        combobox_minutes = ttk.Combobox(select_time, values=[i for i in range(60)], width=2)
+        combobox_minutes.grid(column=1, row=0)
+
+        combobox_secondes = ttk.Combobox(select_time, values=[i for i in range(60)], width=2)
+        combobox_secondes.grid(column=2, row=0)
         tabControl.select(tab2)
 
 
