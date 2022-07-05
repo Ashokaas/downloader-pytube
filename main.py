@@ -199,11 +199,11 @@ def convertir_video():
         urlretrieve(yt.thumbnail_url, 'video/temp/minia_temp/img.jpg')
         global img
 
-        img = ImageTk.PhotoImage(Image.open('video/temp/minia_temp/img.jpg').crop((0, 60, 640, 480-60)).resize((16*13, 9*13)))
 
-        img = ImageTk.PhotoImage(Image.open('video/temp/minia_temp/img.jpg').resize(4*38, 3*38))
+        img = ImageTk.PhotoImage(Image.open('video/temp/minia_temp/img.jpg').crop((0, 60, 640, 480-60)).resize((16*15, 9*15)))
 
         miniature["image"] = img
+        supprimer_fichier_dossier('video/temp/minia_temp')
         label_titre["text"] = "Titre : " + titre_ligne(yt.title)
         label_chaine["text"] = "Chaîne : " + yt.author
         label_vues["text"] = "Vues : " + nb_vues(yt.views)
@@ -234,16 +234,53 @@ def convertir_video():
 
 
         select_time = Frame(tab2)
-        select_time.grid(column=0, row=i+1, columnspan=(i//12+1)*12)
+        select_time.grid(column=0, row=i+1, columnspan=(i//12+1)*12, pady=30)
 
-        combobox_heures = ttk.Combobox(select_time, values=[i for i in range(24)], width=2)
-        combobox_heures.grid(column=0, row=0)
 
-        combobox_minutes = ttk.Combobox(select_time, values=[i for i in range(60)], width=2)
-        combobox_minutes.grid(column=1, row=0)
+        label_debut = Label(select_time, text='Début : ')
+        label_debut.grid(column=0, row=0, sticky=E)
 
-        combobox_secondes = ttk.Combobox(select_time, values=[i for i in range(60)], width=2)
-        combobox_secondes.grid(column=2, row=0)
+        combobox_debut_h = ttk.Combobox(select_time, values=[i for i in range(24)], width=2, justify='center', state='readonly')
+        combobox_debut_h.grid(column=1, row=0)
+
+        label_debut_h = Label(select_time, text='h')
+        label_debut_h.grid(column=2, row=0)
+
+        combobox_debut_min = ttk.Combobox(select_time, values=[i for i in range(60)], width=2, justify='center', state='readonly')
+        combobox_debut_min.grid(column=3, row=0)
+
+        label_debut_min = Label(select_time, text='m')
+        label_debut_min.grid(column=4, row=0)
+
+        combobox_debut_sec = ttk.Combobox(select_time, values=[i for i in range(60)], width=2, justify='center', state='readonly')
+        combobox_debut_sec.grid(column=5, row=0)
+
+        label_debut_sec = Label(select_time, text='s')
+        label_debut_sec.grid(column=6, row=0)
+
+
+        label_fin = Label(select_time, text='Fin : ')
+        label_fin.grid(column=0, row=1, sticky=E)
+
+        combobox_fin_h = ttk.Combobox(select_time, values=[i for i in range(24)], width=2, justify='center', state='readonly')
+        combobox_fin_h.grid(column=1, row=1)
+
+        label_fin_h = Label(select_time, text='h')
+        label_fin_h.grid(column=2, row=1)
+
+        combobox_fin_min = ttk.Combobox(select_time, values=[i for i in range(60)], width=2, justify='center', state='readonly')
+        combobox_fin_min.grid(column=3, row=1)
+
+        label_fin_min = Label(select_time, text='m')
+        label_fin_min.grid(column=4, row=1)
+
+        combobox_fin_sec = ttk.Combobox(select_time, values=[i for i in range(60)], width=2, justify='center', state='readonly')
+        combobox_fin_sec.grid(column=5, row=1)
+
+        label_fin_sec = Label(select_time, text='s')
+        label_fin_sec.grid(column=6, row=1)
+
+
         tabControl.select(tab2)
 
 
@@ -310,22 +347,22 @@ root.bind('<Return>', touche_convertir)
 # -- Frame : tab1 -> root
 
 label_link = Label(tab1, text='Lien de la vidéo :', pady=20)
-label_link.grid(column=0, row=0)
+label_link.grid(column=0, row=0, columnspan=2)
 
 entry_link = Entry(tab1, width=50)
-entry_link.grid(column=0, row=1)
+entry_link.grid(column=0, row=1, columnspan=2)
 entry_link.bind("<Button - 3>", copy)
 
 photo = PhotoImage(file = r"images/delete.png").subsample(20, 20) 
 
 button_delete = Button(tab1, command=clear_entry, image=photo)
-button_delete.grid(column=1, row=1)
+button_delete.grid(column=1, row=1, padx=(0, 75))
 
-button_link = Button(tab1, text="Convertir", command=convertir_video, padx=13, pady=6)
-button_link.grid(column=0, row=2, pady=15)
+button_link = Button(tab1, text="Convertir", command=convertir_video, padx=15, pady=6)
+button_link.grid(column=0, row=2, pady=15, columnspan=2)
 
 label_erreur = Label(tab1, text=None, fg='red')
-label_erreur.grid(column=0, row=3)
+label_erreur.grid(column=0, row=3, columnspan=2)
 
 tab1.columnconfigure(0, weight=1)
 
@@ -376,12 +413,15 @@ label_pourcentages_dislikes.pack(side='right', anchor='n')
 
 
 # -- Frame: Paramètres --
+label_chemin_destination = Label(tab3, text='Destination par défaut :')
+label_chemin_destination.grid(column=0, row=0, padx=(10, 0), pady=(10, 0))
+
 entry_chemin_destination = Entry(tab3, width=0)
-entry_chemin_destination.grid(column=0, row=0, padx=(10, 5), pady=(10, 0))
+entry_chemin_destination.grid(column=1, row=0, padx=(10, 5), pady=(10, 0))
 entry_chemin_destination.insert(0, sortie)
 
 selec_chemin_destination = Button(tab3, text="Parcourir", command=dialogue_chemin)
-selec_chemin_destination.grid(column=1, row=0, pady=(10, 0))
+selec_chemin_destination.grid(column=2, row=0, pady=(10, 0), padx=(10, 0))
 
 
 
