@@ -167,8 +167,20 @@ def telechargement(video):
     debut = int(combobox_debut_h.get())*3600 + int(combobox_debut_min.get())*60 + int(combobox_debut_sec.get())
     fin =  int(combobox_fin_h.get())*3600 + int(combobox_fin_min.get())*60 + int(combobox_fin_sec.get())
 
-    if fin > yt.length or debut > fin or debut == fin:
-        return "Erreur Non"
+
+    if fin > yt.length:
+        label_erreur['text'] = 'La fin est supérieure à la durée totale de la vidéo'
+        return None
+
+    if debut > fin:
+        label_erreur['text'] = 'Le début est supérieur à la fin'
+        return None
+    
+    if debut == fin:
+        label_erreur['text'] = 'Le début est égal à la fin'
+        return None
+
+    
 
     if video.is_progressive == False:
         audio_for_video = audio(yt)
