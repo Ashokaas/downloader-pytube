@@ -65,20 +65,20 @@ def supprimer_fichier_dossier(dossier):
         os.remove(dossier + "/" + fichier)
 
 
-def get_likes_and_dislikes(video_url):
-    main_api = "https://returnyoutubedislikeapi.com/votes?videoId="
-
+def convertir_url(video_url):
     _video_ID = video_url.replace("https://youtu.be/", "")
     _video_ID = _video_ID.replace("https://youtube.com/watch?v=", "")
     _video_ID = _video_ID.replace("https://www.youtu.be/", "")
     _video_ID = _video_ID.replace("https://www.youtube.com/watch?v=", "")
     _video_ID = _video_ID.replace("&feature=share", "")
-    
-    video_id = _video_ID
 
+    return _video_ID
+
+def get_likes_and_dislikes(video_url):
+    main_api = "https://returnyoutubedislikeapi.com/votes?videoId="
+    video_id = convertir_url(video_url)
     res = requests.get(main_api + video_id)
     response = json.loads(res.text)
-
     return response["likes"], response["dislikes"], response["likes"]+response["dislikes"]
     
 
@@ -146,6 +146,10 @@ def telechargement(video):
         '█' * int(size*20/contentsize), ' '*(20-int(size*20/contentsize)), float(size/contentsize*100)), poids_video(size), "/", poids_video(contentsize), end='')
 
 
+
+    debut = int(combobox_debut_h)*3600 + int(combobox_debut_min)*60 + int(combobox_debut_sec)
+    fin =  int(combobox_fin_h)*3600 + int(combobox_fin_min)*60 + int(combobox_fin_sec)
+
     if video.is_progressive == False:
         audio_for_video = audio(yt)
         print(audio_for_video)
@@ -176,13 +180,22 @@ def telechargement(video):
     
 
 
+def telecharger_miniature():
+    global sortie, short_url
+    urlretrieve('http://img.youtube.com/vi/' + short_url + '/maxresdefault.jpg', sortie + '/' + formatage_video_name_without_extension(yt.title) + '.jpg')
+
 
     
  # -- Convertir vidéo --
 def convertir_video():
 
     try:
+        global url
+        url = str(entry_link.get())
 
+        global short_url
+        short_url = convertir_url(str(entry_link.get()))
+        
         def telecharger():
             global sortie
             sortie = entry_chemin_destination.get()
@@ -193,35 +206,37 @@ def convertir_video():
 
         yt = YouTube(entry_link.get())
 
-        for stream in yt.streams:
-            print(stream)
 
-        urlretrieve(yt.thumbnail_url, 'video/temp/minia_temp/img.jpg')
+
         global img
 
+        urlretrieve('http://img.youtube.com/vi/' + short_url + '/maxresdefault.jpg', 'video/temp/minia_temp/img.jpg')
 
-        img = ImageTk.PhotoImage(Image.open('video/temp/minia_temp/img.jpg').crop((0, 60, 640, 480-60)).resize((16*15, 9*15)))
+        img = ImageTk.PhotoImage(Image.open('video/temp/minia_temp/img.jpg').resize((16*15, 9*15)))
 
         miniature["image"] = img
         supprimer_fichier_dossier('video/temp/minia_temp')
         label_titre["text"] = "Titre : " + titre_ligne(yt.title)
         label_chaine["text"] = "Chaîne : " + yt.author
         label_vues["text"] = "Vues : " + nb_vues(yt.views)
-        label_duree["text"] = "Durée : " + duree(yt.length)
+        h, min, sec = duree(yt.length)
+        label_duree["text"] = "Durée : " + str(h) + 'h' + str(min) + 'm' + str(sec) + 's'
         
+        # LIKES / DISLIKES
+            # Récupération des données
         likes, dislikes, somme = get_likes_and_dislikes(entry_link.get())
-        print(likes, dislikes, somme)
+            # Ligne pour faire le rapport
         ratio.create_line(0, 0, likes/somme*200, 0, fill="blue", width=7)
         ratio.create_line(likes/somme*200, 0, (likes/somme)*200+(dislikes/somme)*200, 0, fill="red", width=7)
-
+            # Likes
         label_likes["fg"] = 'blue'
-        label_likes["text"] = likes
-
+        label_likes["text"] = str(likes) + '👍'
+            
         label_pourcentages_likes["text"] = str(round(likes/somme*100)) + '%'
         label_pourcentages_likes["fg"] = 'blue'
         
         label_dislikes["fg"] = 'red'
-        label_dislikes["text"] = dislikes
+        label_dislikes["text"] = str(dislikes) + '👎'
 
         label_pourcentages_dislikes["text"] = str(round(dislikes/somme*100)) + '%'
         label_pourcentages_dislikes["fg"] = 'red'
@@ -229,58 +244,80 @@ def convertir_video():
         video = yt.streams
         liste_video, i = choix_video(video)
 
-        button_id = Button(information, text='Télécharger', command=telecharger, pady=4, padx=9)
-        button_id.pack(pady=(0, 50), side='bottom')
+        button_telecharger_video = Button(information, text='Télécharger', command=telecharger, pady=4, padx=9)
+        button_telecharger_video.pack(pady=(20, 0))
+
+        button_telecharger_miniature = Button(information, text='Télécharger la miniature', command=telecharger_miniature)
+        button_telecharger_miniature.pack(pady=(20, 0))
 
 
+
+
+        # Frame : Choisir durée de la vidéo à télécharger
+        global combobox_debut_h, combobox_debut_min, combobox_debut_sec, combobox_fin_h, combobox_fin_min, combobox_fin_sec
         select_time = Frame(tab2)
         select_time.grid(column=0, row=i+1, columnspan=(i//12+1)*12, pady=30)
 
-
+            # DEBUT
+                # Lael début
         label_debut = Label(select_time, text='Début : ')
         label_debut.grid(column=0, row=0, sticky=E)
-
+                # Heure
+                    # Combobox heure
         combobox_debut_h = ttk.Combobox(select_time, values=[i for i in range(24)], width=2, justify='center', state='readonly')
+        combobox_debut_h.current(0)
         combobox_debut_h.grid(column=1, row=0)
-
+                    # Label heure 
         label_debut_h = Label(select_time, text='h')
         label_debut_h.grid(column=2, row=0)
-
+                # Minute
+                    # Combobox minute
         combobox_debut_min = ttk.Combobox(select_time, values=[i for i in range(60)], width=2, justify='center', state='readonly')
+        combobox_debut_min.current(0)
         combobox_debut_min.grid(column=3, row=0)
-
+                    # Label min
         label_debut_min = Label(select_time, text='m')
         label_debut_min.grid(column=4, row=0)
-
+                # Seconde
+                    # Combobox sec
         combobox_debut_sec = ttk.Combobox(select_time, values=[i for i in range(60)], width=2, justify='center', state='readonly')
+        combobox_debut_sec.current(0)
         combobox_debut_sec.grid(column=5, row=0)
-
+                    # Label sec
         label_debut_sec = Label(select_time, text='s')
         label_debut_sec.grid(column=6, row=0)
 
-
+            # FIN
+                # Label fin
         label_fin = Label(select_time, text='Fin : ')
         label_fin.grid(column=0, row=1, sticky=E)
-
+                # Heure
+                    # Combobox heure
         combobox_fin_h = ttk.Combobox(select_time, values=[i for i in range(24)], width=2, justify='center', state='readonly')
+        combobox_fin_h.current(h)
         combobox_fin_h.grid(column=1, row=1)
-
+                    # Label heure
         label_fin_h = Label(select_time, text='h')
         label_fin_h.grid(column=2, row=1)
-
+                # Minute
+                    # Combobox minute
         combobox_fin_min = ttk.Combobox(select_time, values=[i for i in range(60)], width=2, justify='center', state='readonly')
+        combobox_fin_min.current(min)
         combobox_fin_min.grid(column=3, row=1)
-
+                    # Label minutes
         label_fin_min = Label(select_time, text='m')
         label_fin_min.grid(column=4, row=1)
-
+                # Secondes
+                    # Combobox seconde
         combobox_fin_sec = ttk.Combobox(select_time, values=[i for i in range(60)], width=2, justify='center', state='readonly')
+        combobox_fin_sec.current(sec)
         combobox_fin_sec.grid(column=5, row=1)
-
+                    # Label seconde
         label_fin_sec = Label(select_time, text='s')
         label_fin_sec.grid(column=6, row=1)
 
 
+        # Afficher automatiquement le deuxième onglet
         tabControl.select(tab2)
 
 
@@ -313,7 +350,7 @@ root.iconbitmap('images/youtube.ico')
 
 root.resizable(False, False)
 
-hauteur = 500
+hauteur = 550
 largeur = 800
 root.geometry(str(largeur) + 'x' + str(hauteur))
 
@@ -392,23 +429,25 @@ label_vues.pack(pady=5)
 label_duree = Label(information, text=None)
 label_duree.pack(pady=5)
     # Pouces bleus/rouges
-ratio = Canvas(information, width=200, height=3.5, bd=0, highlightthickness=0)
+frame_ratio = Frame(information)
+frame_ratio.pack()
+ratio = Canvas(frame_ratio, width=200, height=3.5, bd=0, highlightthickness=0)
 ratio.pack(pady=10)
     # Likes / Dislikes
-        # Likes 
+        # Likes
             # Likes
-label_likes = Label(information, text=None)
+label_likes = Label(frame_ratio, text=None)
 label_likes.pack(side='left', anchor='n', padx=(35, 0))
             # Pourcentage Likes
-label_pourcentages_likes = Label(information, text=None)
-label_pourcentages_likes.pack(side='left', anchor='n')
+label_pourcentages_likes = Label(frame_ratio, text=None)
+label_pourcentages_likes.pack(side='left', anchor='n', padx=(0, 30))
         # Dislikes
             # Dislikes
-label_dislikes = Label(information, text=None)
+label_dislikes = Label(frame_ratio, text=None)
 label_dislikes.pack(side='right', anchor='n', padx=(0, 35))
             # Pourcentage Dislikes
-label_pourcentages_dislikes = Label(information, text=None)
-label_pourcentages_dislikes.pack(side='right', anchor='n')
+label_pourcentages_dislikes = Label(frame_ratio, text=None)
+label_pourcentages_dislikes.pack(side='right', anchor='n', padx=(30, 0))
 
 
 
@@ -429,4 +468,6 @@ selec_chemin_destination.grid(column=2, row=0, pady=(10, 0), padx=(10, 0))
 # Affichage de la fenêtre
 if __name__ == "__main__":
     root.mainloop()
+
+# https://www.youtube.com/watch?v=bBkH4mQK050
     
