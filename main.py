@@ -134,6 +134,23 @@ def choix_video(video):
 
 
 
+def ffmpeg_extract_subclip(filename, t1, t2, targetname=None):
+    """ Makes a new video file playing video file ``filename`` between
+        the times ``t1`` and ``t2``. """
+    name, ext = os.path.splitext(filename)
+    if not targetname:
+        T1, T2 = [int(1000*t) for t in [t1, t2]]
+        targetname = "%sSUB%d_%d.%s" % (name, T1, T2, ext)
+    
+    cmd = [get_setting("FFMPEG_BINARY"),"-y",
+           "-ss", "%0.2f"%t1,
+           "-i", filename,
+           "-t", "%0.2f"%(t2-t1),
+           "-map", "0", "-vcodec", "copy", "-acodec", "copy", targetname]
+    
+    call(cmd)
+
+
 
 
 def telechargement(video):
@@ -147,8 +164,11 @@ def telechargement(video):
 
 
 
-    debut = int(combobox_debut_h)*3600 + int(combobox_debut_min)*60 + int(combobox_debut_sec)
-    fin =  int(combobox_fin_h)*3600 + int(combobox_fin_min)*60 + int(combobox_fin_sec)
+    debut = int(combobox_debut_h.get())*3600 + int(combobox_debut_min.get())*60 + int(combobox_debut_sec.get())
+    fin =  int(combobox_fin_h.get())*3600 + int(combobox_fin_min.get())*60 + int(combobox_fin_sec.get())
+
+    if fin > yt.length or debut > fin or debut == fin:
+        return "Erreur Non"
 
     if video.is_progressive == False:
         audio_for_video = audio(yt)
@@ -174,6 +194,10 @@ def telechargement(video):
         video_path = 'video/temp/video_temp'
         print("Téléchargement de la video en cours...")
         video.download(output_path=sortie + '/', filename=file_name)
+
+
+    if debut != 0 or fin != yt.length:
+        ffmpeg_extract_subclip(sortie + '/' + file_name, debut, fin)
 
     print(sortie)
     subprocess.Popen(r'explorer /select,"' + sortie.replace('/', '\\') + '\\' + file_name + r'"')
