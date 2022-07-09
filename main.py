@@ -1,7 +1,6 @@
 import subprocess
 from tkinter import *
-from tkinter import ttk
-from tkinter import filedialog
+from tkinter import ttk, filedialog
 from PIL import ImageTk, Image
 from pytube import YouTube
 from urllib.request import urlretrieve
@@ -19,18 +18,19 @@ import json
 # -- Importation des fonctions supplémentaires
 from convertions import *
 
+# https://www.youtube.com/watch?v=hgrUj1qMNHk
 
 # == FONCTIONS ==
 
+with open("sortie.data", "r") as fichier_sortie:
+    sortie = fichier_sortie.readline()
 
-
-sortie = os.path.expanduser('~') + r"\Desktop"
 print(sortie)
 
 
 # J'écrit "vidéo" sans accent dans les commentaires mais L'ORTHOGRAPHE IL A CHANGE
 
-
+global video
 
 
 # -- Clear python console --
@@ -58,6 +58,23 @@ def fusionner_video_audio(video,audio,output, vcodec='copy',
     call(cmd)
 
 
+
+
+def ffmpeg_extract_subclip(filename, t1, t2, targetname=None):
+    """ Makes a new video file playing video file ``filename`` between
+        the times ``t1`` and ``t2``. """
+    name, ext = os.path.splitext(filename)
+    if not targetname:
+        T1, T2 = [int(1000*t) for t in [t1, t2]]
+        targetname = "%sSUB%d_%d.%s" % (name, T1, T2, ext)
+    
+    cmd = [get_setting("FFMPEG_BINARY"),"-y",
+           "-ss", "%0.2f"%t1,
+           "-i", filename,
+           "-t", "%0.2f"%(t2-t1),
+           "-map", "0", "-vcodec", "copy", "-acodec", "copy", targetname]
+    
+    call(cmd)
 
 
 def supprimer_fichier_dossier(dossier):
@@ -95,22 +112,29 @@ def audio(yt):
                 qualite_max = qualite_audio
     # Récupération du flux audio possédant la meilleure qualité
     qualite_max = str(qualite_max) + "kbps"
-    video = yt.streams.filter(mime_type="audio/webm", abr=qualite_max)
+    audio = yt.streams.filter(mime_type="audio/webm", abr=qualite_max)
     # On retourne le premier élément de la liste car même s'il n'y a qu'un seul meilleur flux audio, le .filter retourne un liste
-    return video[0]
+    return audio[0]
 
 
 
 global itag_to_download
-def choix_video(video):
+def choix_video(streams):
+
     # Création d'une liste de dictionnaires qui stocke les informations importantes à l'utilisateur ainsi qu'un ID pour choisir la video à télécharger
     liste_video = []
+    liste_audio = []
     # Pour chaque flux "stream" dans video:
-    for stream in video:
+    for stream in streams:
+        type_stream = stream.mime_type.split("/")
+        print(type_stream[0][0])
+        type_stream = {"type": type_stream[0], "extension": type_stream[1]}
         # S'il est une video/n'est pas un audio
-        if stream.mime_type != "audio/mp4" and stream.mime_type != "audio/webm":
+        if type_stream['type'] == "video":
             # Ajout d'un dico contenant des infos cool qur la video
-            liste_video.append({"type": stream.mime_type, "resolution": stream.resolution, "fps": (str(stream.fps) + "fps"), "taille": poids_video(stream.filesize), "itag": stream.itag})
+            liste_video.append({"type": type_stream["type"], "extension": type_stream["extension"], "resolution": stream.resolution, "fps": (str(stream.fps) + "fps"), "taille": poids_video(stream.filesize), "itag": stream.itag})
+        elif type_stream['type'] == "audio":
+            liste_audio.append({"type": type_stream["type"], "extension": type_stream["extension"], "kbps": stream.abr, "taille": poids_video(stream.filesize), "itag": stream.itag})
     # Tri décroissant en fonction : resolution, fps, taille
     liste_video.sort(key=lambda element:(int(element['resolution'][0:-1]), int(element['fps'][0:-3]), float(element['taille'][0:-2])), reverse=True)
     # Affichage des informations pour l'utilisateur sur chaque video et d'un ID pour pouvoir en sélectionner une
@@ -118,49 +142,54 @@ def choix_video(video):
     id = IntVar()
     colonne = 0
     ligne = 0
+    x = 3
+    y = 2
     for i in range(len(liste_video)):
         if i > 12:
             colonne = 6
             ligne = -13
-        Label(tab2, text=("ID" + str(i))).grid(column=0+colonne, row=i+ligne)
-        Label(tab2, text=liste_video[i]["type"]).grid(column=1+colonne, row=i+ligne)
-        Label(tab2, text=liste_video[i]["resolution"]).grid(column=2+colonne, row=i+ligne)
-        Label(tab2, text=liste_video[i]["fps"]).grid(column=3+colonne, row=i+ligne)
-        Label(tab2, text=liste_video[i]["taille"]).grid(column=4+colonne, row=i+ligne)
-        Radiobutton(tab2, variable=id, value=liste_video[i]["itag"]).grid(column=5+colonne, row=i+ligne)
+        if liste_video[i]["type"] == "audio":
+            tab = tab2_audio
+        elif liste_video[i]["type"] == "video":
+            tab = tab2_video
+        Radiobutton(tab, variable=id, value=liste_video[i]["itag"]).grid(column=0+colonne, row=i+ligne, padx=x, pady=y)
+        Label(tab, text=liste_video[i]["type"]).grid(column=1+colonne, row=i+ligne, padx=x, pady=y)
+        Label(tab, text=liste_video[i]["extension"]).grid(column=2+colonne, row=i+ligne, padx=x, pady=y)
+        Label(tab, text=liste_video[i]["resolution"]).grid(column=3+colonne, row=i+ligne, padx=x, pady=y)
+        Label(tab, text=liste_video[i]["fps"]).grid(column=4+colonne, row=i+ligne, padx=x, pady=y)
+        Label(tab, text=liste_video[i]["taille"]).grid(column=5+colonne, row=i+ligne, padx=x, pady=y)
+    print(liste_audio)
+    colonne = 0
+    ligne = 0
+    x = 4
+    y = 3
+    for e in range(len(liste_audio)):
+        if e > 12:
+            colonne = 6
+            ligne = -13
+        if liste_audio[e]["type"] == "audio":
+            tab = tab2_audio
+        elif liste_audio[e]["type"] == "video":
+            tab = tab2_video
+        Radiobutton(tab, variable=id, value=liste_audio[e]["itag"]).grid(column=0+colonne, row=e+ligne, padx=x, pady=y)
+        Label(tab, text=liste_audio[e]["type"]).grid(column=1+colonne, row=e+ligne, padx=x, pady=y)
+        Label(tab, text=liste_audio[e]["extension"]).grid(column=2+colonne, row=e+ligne, padx=x, pady=y)
+        Label(tab, text=liste_audio[e]["taille"]).grid(column=5+colonne, row=e+ligne, padx=x, pady=y)
 
-    return liste_video, i
     
 
 
-
-def ffmpeg_extract_subclip(filename, t1, t2, targetname=None):
-    """ Makes a new video file playing video file ``filename`` between
-        the times ``t1`` and ``t2``. """
-    name, ext = os.path.splitext(filename)
-    if not targetname:
-        T1, T2 = [int(1000*t) for t in [t1, t2]]
-        targetname = "%sSUB%d_%d.%s" % (name, T1, T2, ext)
-    
-    cmd = [get_setting("FFMPEG_BINARY"),"-y",
-           "-ss", "%0.2f"%t1,
-           "-i", filename,
-           "-t", "%0.2f"%(t2-t1),
-           "-map", "0", "-vcodec", "copy", "-acodec", "copy", targetname]
-    
-    call(cmd)
+def progress(streams, chunk: bytes, bytes_remaining: int):
+    global video, progress_bar
+    contentsize = video.filesize
+    size = contentsize - bytes_remaining
+    print(round(size/contentsize*100))
+    progress_bar['value'] = round(size/contentsize*100)
 
 
-
-
-def telechargement(video):
-
-
-    def progress(streams, chunk: bytes, bytes_remaining: int):
-        contentsize = video.filesize
-        size = contentsize - bytes_remaining
-        print('\r' + 'Téléchargement en cours :[%s%s]%.2f%%;' % (
-        '█' * int(size*20/contentsize), ' '*(20-int(size*20/contentsize)), float(size/contentsize*100)), poids_video(size), "/", poids_video(contentsize), end='')
+def telechargement():
+    global video
+    video = yt.streams.get_by_itag(id.get())
 
 
 
@@ -181,7 +210,6 @@ def telechargement(video):
         return None
 
     
-
     if video.is_progressive == False:
         audio_for_video = audio(yt)
         print(audio_for_video)
@@ -190,8 +218,16 @@ def telechargement(video):
         video_path = 'video/temp/video_temp'
         audio_path = 'video/temp/audio_temp'
 
+
+        global progress_bar
+        progress_bar = ttk.Progressbar(select_time, orient='horizontal', length=200, mode='determinate')
+        progress_bar.grid(column=0, row=2)
+        progress_bar['value'] = 50
+
+
         print("Téléchargement de l'audio en cours...")
         audio_for_video.download(output_path=audio_path, filename=file_name)
+                
 
         print("Téléchargement de la video en cours...")
         video.download(output_path=video_path, filename=file_name)
@@ -221,30 +257,20 @@ def telecharger_miniature():
     urlretrieve('http://img.youtube.com/vi/' + short_url + '/maxresdefault.jpg', sortie + '/' + formatage_video_name_without_extension(yt.title) + '.jpg')
 
 
-    
+
  # -- Convertir vidéo --
 def convertir_video():
 
     try:
-        global url
+        global url, short_url, yt, img
+
+
         url = str(entry_link.get())
 
-        global short_url
         short_url = convertir_url(str(entry_link.get()))
-        
-        def telecharger():
-            global sortie
-            sortie = entry_chemin_destination.get()
-            telechargement(yt.streams.get_by_itag(id.get()))
 
-        global yt
-        
+        yt = YouTube(entry_link.get(), on_progress_callback=progress)
 
-        yt = YouTube(entry_link.get())
-
-
-
-        global img
 
         urlretrieve('http://img.youtube.com/vi/' + short_url + '/maxresdefault.jpg', 'video/temp/minia_temp/img.jpg')
 
@@ -256,7 +282,12 @@ def convertir_video():
         label_chaine["text"] = "Chaîne : " + yt.author
         label_vues["text"] = "Vues : " + nb_vues(yt.views)
         h, min, sec = duree(yt.length)
-        label_duree["text"] = "Durée : " + str(h) + 'h' + str(min) + 'm' + str(sec) + 's'
+        if yt.length < 60:
+            label_duree["text"] = "Durée : " + str(sec) + "s"
+        elif yt.length < 3600:
+            label_duree["text"] = "Durée : " + str(min) + "m " + str(sec) + "s"
+        else:
+            label_duree["text"] = "Durée : " + str(h) + "h " + str(min) + "m " + str(sec) + "s"
         
         # LIKES / DISLIKES
             # Récupération des données
@@ -266,21 +297,20 @@ def convertir_video():
         ratio.create_line(likes/somme*200, 0, (likes/somme)*200+(dislikes/somme)*200, 0, fill="red", width=7)
             # Likes
         label_likes["fg"] = 'blue'
-        label_likes["text"] = str(likes) + '👍'
+        label_likes["text"] = '👍' + nb_vues(likes)
             
         label_pourcentages_likes["text"] = str(round(likes/somme*100)) + '%'
         label_pourcentages_likes["fg"] = 'blue'
         
         label_dislikes["fg"] = 'red'
-        label_dislikes["text"] = str(dislikes) + '👎'
+        label_dislikes["text"] = nb_vues(dislikes) + '👎'
 
         label_pourcentages_dislikes["text"] = str(round(dislikes/somme*100)) + '%'
         label_pourcentages_dislikes["fg"] = 'red'
 
-        video = yt.streams
-        liste_video, i = choix_video(video)
+        choix_video(yt.streams)
 
-        button_telecharger_video = Button(information, text='Télécharger', command=telecharger, pady=4, padx=9)
+        button_telecharger_video = Button(information, text='Télécharger', command=telechargement, pady=4, padx=9)
         button_telecharger_video.pack(pady=(20, 0))
 
         button_telecharger_miniature = Button(information, text='Télécharger la miniature', command=telecharger_miniature)
@@ -290,67 +320,67 @@ def convertir_video():
 
 
         # Frame : Choisir durée de la vidéo à télécharger
-        global combobox_debut_h, combobox_debut_min, combobox_debut_sec, combobox_fin_h, combobox_fin_min, combobox_fin_sec
+        global combobox_debut_h, combobox_debut_min, combobox_debut_sec, combobox_fin_h, combobox_fin_min, combobox_fin_sec, select_time
         select_time = Frame(tab2)
-        select_time.grid(column=0, row=i+1, columnspan=(i//12+1)*12, pady=30)
-
+        select_time.pack(expand=1)
+        pady_select_time = 5
             # DEBUT
                 # Lael début
         label_debut = Label(select_time, text='Début : ')
-        label_debut.grid(column=0, row=0, sticky=E)
+        label_debut.grid(column=0, row=0, sticky=E, pady=pady_select_time)
                 # Heure
                     # Combobox heure
         combobox_debut_h = ttk.Combobox(select_time, values=[i for i in range(24)], width=2, justify='center', state='readonly')
         combobox_debut_h.current(0)
-        combobox_debut_h.grid(column=1, row=0)
+        combobox_debut_h.grid(column=1, row=0, pady=pady_select_time)
                     # Label heure 
         label_debut_h = Label(select_time, text='h')
-        label_debut_h.grid(column=2, row=0)
+        label_debut_h.grid(column=2, row=0, pady=pady_select_time)
                 # Minute
                     # Combobox minute
         combobox_debut_min = ttk.Combobox(select_time, values=[i for i in range(60)], width=2, justify='center', state='readonly')
         combobox_debut_min.current(0)
-        combobox_debut_min.grid(column=3, row=0)
+        combobox_debut_min.grid(column=3, row=0, pady=pady_select_time)
                     # Label min
         label_debut_min = Label(select_time, text='m')
-        label_debut_min.grid(column=4, row=0)
+        label_debut_min.grid(column=4, row=0, pady=pady_select_time)
                 # Seconde
                     # Combobox sec
         combobox_debut_sec = ttk.Combobox(select_time, values=[i for i in range(60)], width=2, justify='center', state='readonly')
         combobox_debut_sec.current(0)
-        combobox_debut_sec.grid(column=5, row=0)
+        combobox_debut_sec.grid(column=5, row=0, pady=pady_select_time)
                     # Label sec
         label_debut_sec = Label(select_time, text='s')
-        label_debut_sec.grid(column=6, row=0)
+        label_debut_sec.grid(column=6, row=0, pady=pady_select_time)
 
             # FIN
                 # Label fin
         label_fin = Label(select_time, text='Fin : ')
-        label_fin.grid(column=0, row=1, sticky=E)
+        label_fin.grid(column=0, row=1, sticky=E, pady=pady_select_time)
                 # Heure
                     # Combobox heure
         combobox_fin_h = ttk.Combobox(select_time, values=[i for i in range(24)], width=2, justify='center', state='readonly')
         combobox_fin_h.current(h)
-        combobox_fin_h.grid(column=1, row=1)
+        combobox_fin_h.grid(column=1, row=1, pady=pady_select_time)
                     # Label heure
         label_fin_h = Label(select_time, text='h')
-        label_fin_h.grid(column=2, row=1)
+        label_fin_h.grid(column=2, row=1, pady=pady_select_time)
                 # Minute
                     # Combobox minute
         combobox_fin_min = ttk.Combobox(select_time, values=[i for i in range(60)], width=2, justify='center', state='readonly')
         combobox_fin_min.current(min)
-        combobox_fin_min.grid(column=3, row=1)
+        combobox_fin_min.grid(column=3, row=1, pady=pady_select_time)
                     # Label minutes
         label_fin_min = Label(select_time, text='m')
-        label_fin_min.grid(column=4, row=1)
+        label_fin_min.grid(column=4, row=1, pady=pady_select_time)
                 # Secondes
                     # Combobox seconde
         combobox_fin_sec = ttk.Combobox(select_time, values=[i for i in range(60)], width=2, justify='center', state='readonly')
         combobox_fin_sec.current(sec)
-        combobox_fin_sec.grid(column=5, row=1)
+        combobox_fin_sec.grid(column=5, row=1, pady=pady_select_time)
                     # Label seconde
         label_fin_sec = Label(select_time, text='s')
-        label_fin_sec.grid(column=6, row=1)
+        label_fin_sec.grid(column=6, row=1, pady=pady_select_time)
 
 
         # Afficher automatiquement le deuxième onglet
@@ -367,8 +397,17 @@ def convertir_video():
 def dialogue_chemin():
     global sortie
     sortie = filedialog.askdirectory()
+    with open ('sortie.data', "w") as fichier_sortie:
+        fichier_sortie.write(sortie)
     entry_chemin_destination.delete(0, len(entry_chemin_destination.get()))
     entry_chemin_destination.insert(0, sortie)
+
+def select_desktop():
+    sortie = os.path.expanduser('~') + r"\Desktop"
+    entry_chemin_destination.delete(0, len(entry_chemin_destination.get()))
+    entry_chemin_destination.insert(0, sortie)
+    with open('sortie.data', 'w') as fichier_sortie:
+        fichier_sortie.write(sortie)
 
 
     
@@ -402,7 +441,7 @@ tab3 = Frame(tabControl)
 style_menu = ttk.Style()
 style_menu.configure('TNotebook.Tab', font='Calibri 11')
 
-tabControl.add(tab1, text ='Vidéo')
+tabControl.add(tab1, text ='Convertion')
 tabControl.add(tab2, text ='Options de téléchargement')
 tabControl.add(tab3, text = 'Paramètres')
 
@@ -414,6 +453,19 @@ def touche_convertir(event):
     convertir_video()
 
 root.bind('<Return>', touche_convertir)
+
+
+
+# Options de téléchargement
+tab_2_Control = ttk.Notebook(tab2)
+
+tab2_video = Frame(tab_2_Control, height=380)
+tab2_audio = Frame(tab_2_Control, height=380)
+
+tab_2_Control.add(tab2_video, text='Vidéo')
+tab_2_Control.add(tab2_audio, text='Audio')
+
+tab_2_Control.pack(expand=False, fill="x", side=TOP)
 
 
 
@@ -476,14 +528,14 @@ label_likes = Label(frame_ratio, text=None)
 label_likes.pack(side='left', anchor='n', padx=(35, 0))
             # Pourcentage Likes
 label_pourcentages_likes = Label(frame_ratio, text=None)
-label_pourcentages_likes.pack(side='left', anchor='n', padx=(0, 30))
+label_pourcentages_likes.pack(side='left', anchor='n', padx=(5, 30))
         # Dislikes
             # Dislikes
 label_dislikes = Label(frame_ratio, text=None)
 label_dislikes.pack(side='right', anchor='n', padx=(0, 35))
             # Pourcentage Dislikes
 label_pourcentages_dislikes = Label(frame_ratio, text=None)
-label_pourcentages_dislikes.pack(side='right', anchor='n', padx=(30, 0))
+label_pourcentages_dislikes.pack(side='right', anchor='n', padx=(30, 5))
 
 
 
@@ -497,6 +549,9 @@ entry_chemin_destination.insert(0, sortie)
 
 selec_chemin_destination = Button(tab3, text="Parcourir", command=dialogue_chemin)
 selec_chemin_destination.grid(column=2, row=0, pady=(10, 0), padx=(10, 0))
+
+button_desktop = Button(tab3, text='Par défault (Bureau)', command=select_desktop)
+button_desktop.grid(column=3, row=0, pady=(10, 0), padx=(10, 0))
 
 
 
