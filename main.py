@@ -127,7 +127,6 @@ def choix_video(streams):
     # Pour chaque flux "stream" dans video:
     for stream in streams:
         type_stream = stream.mime_type.split("/")
-        print(type_stream[0][0])
         type_stream = {"type": type_stream[0], "extension": type_stream[1]}
         # S'il est une video/n'est pas un audio
         if type_stream['type'] == "video":
@@ -184,7 +183,8 @@ def progress(streams, chunk: bytes, bytes_remaining: int):
     contentsize = video.filesize
     size = contentsize - bytes_remaining
     print(round(size/contentsize*100))
-    progress_bar['value'] = round(size/contentsize*100)
+    progress_bar['value'] = int(round(size/contentsize*100))
+    print(progress_bar['value'])
 
 
 def telechargement():
@@ -219,9 +219,6 @@ def telechargement():
         audio_path = 'video/temp/audio_temp'
 
 
-        global progress_bar
-        progress_bar = ttk.Progressbar(select_time, orient='horizontal', length=200, mode='determinate')
-        progress_bar.grid(column=0, row=2)
         progress_bar['value'] = 50
 
 
@@ -383,13 +380,16 @@ def convertir_video():
         label_fin_sec.grid(column=6, row=1, pady=pady_select_time)
 
 
+        global progress_bar
+        progress_bar = ttk.Progressbar(select_time, orient='horizontal', length=350, mode='determinate')
+        progress_bar.grid(column=0, row=2, columnspan=7)
+
         # Afficher automatiquement le deuxième onglet
         tabControl.select(tab2)
 
 
     except pytube.exceptions.RegexMatchError:
         label_erreur["text"] = 'Erreur de lien'
-        print("oui")
 
 
 
