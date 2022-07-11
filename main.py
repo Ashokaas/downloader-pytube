@@ -1,68 +1,80 @@
-import subprocess
+# =====================================
+#      IMPORTATIONS DES LIBRAIRIES 
+# =====================================
+
+# Tkinter
 from tkinter import *
 from tkinter import ttk, filedialog
 from PIL import ImageTk, Image
+
+# Pytube
 from pytube import YouTube
-from urllib.request import urlretrieve
 import pytube.exceptions
-# import progressbar as progress
-from colorama import init, Fore
+
+# OS
 import os
-import subprocess as sp
+
+# Montage video et audio
 from moviepy.config import get_setting
-from subprocess import call
-from RangeSlider.RangeSlider import RangeSliderH, RangeSliderV
-# likes dislikes
-import requests
-import json
-# -- Importation des fonctions supplémentaires
-from convertions import *
+import subprocess
 
-# https://www.youtube.com/watch?v=hgrUj1qMNHk
+# Récupérer Miniature
+from urllib.request import urlretrieve
 
-# == FONCTIONS ==
+# Recupérer Likes et Dislikes
+import requests, json
 
+# Convertir et mettre en forme
+import convertions
+
+
+
+
+# ===================
+#      FONCTIONS
+# ===================
+
+global sortie, video
+
+
+# Importation de la sortie depuis sortie.data
 with open("sortie.data", "r") as fichier_sortie:
     sortie = fichier_sortie.readline()
 
-print(sortie)
 
 
-# J'écrit "vidéo" sans accent dans les commentaires mais L'ORTHOGRAPHE IL A CHANGE
+def inserer_texte_console(texte, clear_console=False, root_update=False):
+    if clear_console == True:
+        output_log.delete('0.0', 'end')
+    output_log.insert(END, str(texte))
+    if root_update == True:
+        root.update()
 
-global video
 
 
-# -- Clear python console --
-clear = lambda: os.system('cls')
-
+# -- Supprimer le texte de ntry_link --
 def clear_entry():
     entry_link.delete(0, 'end')
 
+
+
+# -- Copie l'URL dans entry_link si l'utilisateur fait un click droit --
 def copy(event):
     lien = str(entry_link.clipboard_get())
-    if "youtube" in lien:
-        clear_entry()
-        entry_link.insert(0, lien)
+    clear_entry()
+    entry_link.insert(0, lien)
+
 
 
 # -- Fusionne l'audio et la video --
-def fusionner_video_audio(video,audio,output, vcodec='copy',
-                             acodec='copy', ffmpeg_output=False,
-                             logger = 'bar'):
-    """ merges video file ``video`` and audio file ``audio`` into one
-        movie file ``output``. """
-    cmd = [get_setting("FFMPEG_BINARY"), "-y", "-i", audio,"-i", video,
-             "-vcodec", vcodec, "-acodec", acodec, output]
-             
-    call(cmd)
+def fusionner_video_audio(video,audio,output, vcodec='copy', acodec='copy', ffmpeg_output=False, logger = 'bar'):
+    cmd = [get_setting("FFMPEG_BINARY"), "-y", "-i", audio,"-i", video, "-vcodec", vcodec, "-acodec", acodec, output]
+    subprocess.call(cmd)
 
 
 
-
+# -- Enregistre un extrait d'une vidéo 
 def ffmpeg_extract_subclip(filename, t1, t2, targetname=None):
-    """ Makes a new video file playing video file ``filename`` between
-        the times ``t1`` and ``t2``. """
     name, ext = os.path.splitext(filename)
     if not targetname:
         T1, T2 = [int(1000*t) for t in [t1, t2]]
@@ -74,23 +86,30 @@ def ffmpeg_extract_subclip(filename, t1, t2, targetname=None):
            "-t", "%0.2f"%(t2-t1),
            "-map", "0", "-vcodec", "copy", "-acodec", "copy", targetname]
     
-    call(cmd)
+    subprocess.call(cmd)
 
 
+
+# -- Supprime tout les documents d'un fichier
 def supprimer_fichier_dossier(dossier):
     for fichier in os.listdir(dossier):
         os.remove(dossier + "/" + fichier)
 
 
+
+# -- Permet de garder uniquement l'ID de la vidéo --
 def convertir_url(video_url):
-    _video_ID = video_url.replace("https://youtu.be/", "")
-    _video_ID = _video_ID.replace("https://youtube.com/watch?v=", "")
-    _video_ID = _video_ID.replace("https://www.youtu.be/", "")
-    _video_ID = _video_ID.replace("https://www.youtube.com/watch?v=", "")
-    _video_ID = _video_ID.replace("&feature=share", "")
+    video_ID = video_url.replace("https://youtu.be/", "")
+    video_ID = video_ID.replace("https://youtube.com/watch?v=", "")
+    video_ID = video_ID.replace("https://www.youtu.be/", "")
+    video_ID = video_ID.replace("https://www.youtube.com/watch?v=", "")
+    video_ID = video_ID.replace("&feature=share", "")
 
-    return _video_ID
+    return video_ID
 
+
+
+# -- Récupère les likes et les dislikes d'une vidéo --
 def get_likes_and_dislikes(video_url):
     main_api = "https://returnyoutubedislikeapi.com/votes?videoId="
     video_id = convertir_url(video_url)
@@ -99,10 +118,12 @@ def get_likes_and_dislikes(video_url):
     return response["likes"], response["dislikes"], response["likes"]+response["dislikes"]
     
 
-def audio(yt):
+
+# -- Récupère le fichier audio d'un .webm ou .mp4 possédant la meilleure qualité --
+def audio(yt, type):
     # Définie la qualité maximale audio en kbps
     qualite_max = 0
-    for stream in yt.streams.filter(mime_type="audio/webm"):
+    for stream in yt.streams.filter(mime_type="audio/"+type):
         # S'il est un flux audio
         if stream.abr != None:
             # Supprimer le "kbps" pour le garder que le nombre en (int) -- exemple : "128kbs" -> 128
@@ -112,15 +133,15 @@ def audio(yt):
                 qualite_max = qualite_audio
     # Récupération du flux audio possédant la meilleure qualité
     qualite_max = str(qualite_max) + "kbps"
-    audio = yt.streams.filter(mime_type="audio/webm", abr=qualite_max)
+    audio = yt.streams.filter(mime_type="audio/"+type, abr=qualite_max)
     # On retourne le premier élément de la liste car même s'il n'y a qu'un seul meilleur flux audio, le .filter retourne un liste
     return audio[0]
 
 
 
+# -- Affiche tout les flux de la vidéo --
 global itag_to_download
 def choix_video(streams):
-
     # Création d'une liste de dictionnaires qui stocke les informations importantes à l'utilisateur ainsi qu'un ID pour choisir la video à télécharger
     liste_video = []
     liste_audio = []
@@ -131,9 +152,9 @@ def choix_video(streams):
         # S'il est une video/n'est pas un audio
         if type_stream['type'] == "video":
             # Ajout d'un dico contenant des infos cool qur la video
-            liste_video.append({"type": type_stream["type"], "extension": type_stream["extension"], "resolution": stream.resolution, "fps": (str(stream.fps) + "fps"), "taille": poids_video(stream.filesize), "itag": stream.itag})
+            liste_video.append({"type": type_stream["type"], "extension": type_stream["extension"], "resolution": stream.resolution, "fps": (str(stream.fps) + "fps"), "taille": convertions.poids_video(stream.filesize), "itag": stream.itag})
         elif type_stream['type'] == "audio":
-            liste_audio.append({"type": type_stream["type"], "extension": type_stream["extension"], "kbps": stream.abr, "taille": poids_video(stream.filesize), "itag": stream.itag})
+            liste_audio.append({"type": type_stream["type"], "extension": type_stream["extension"], "kbps": stream.abr, "taille": convertions.poids_video(stream.filesize), "itag": stream.itag})
     # Tri décroissant en fonction : resolution, fps, taille
     liste_video.sort(key=lambda element:(int(element['resolution'][0:-1]), int(element['fps'][0:-3]), float(element['taille'][0:-2])), reverse=True)
     # Affichage des informations pour l'utilisateur sur chaque video et d'un ID pour pouvoir en sélectionner une
@@ -173,116 +194,162 @@ def choix_video(streams):
         Radiobutton(tab, variable=id, value=liste_audio[e]["itag"]).grid(column=0+colonne, row=e+ligne, padx=x, pady=y)
         Label(tab, text=liste_audio[e]["type"]).grid(column=1+colonne, row=e+ligne, padx=x, pady=y)
         Label(tab, text=liste_audio[e]["extension"]).grid(column=2+colonne, row=e+ligne, padx=x, pady=y)
-        Label(tab, text=liste_audio[e]["taille"]).grid(column=5+colonne, row=e+ligne, padx=x, pady=y)
+        Label(tab, text=liste_audio[e]["kbps"]).grid(column=3+colonne, row=e+ligne, padx=x, pady=y)
+        Label(tab, text=liste_audio[e]["taille"]).grid(column=4+colonne, row=e+ligne, padx=x, pady=y)
 
     
 
-
+# -- Affiche l'avancé du téléchargement --
 def progress(streams, chunk: bytes, bytes_remaining: int):
-    global video, progress_bar
-    contentsize = video.filesize
-    size = contentsize - bytes_remaining
-    print(round(size/contentsize*100))
-    progress_bar['value'] = int(round(size/contentsize*100))
-    print(progress_bar['value'])
+    global video, progress_bar, is_video
+    # On fait avancer la progress_bar uniquement si le fichier est une vidéo
+    if is_video == True:
+        # Taille totale du fichier
+        contentsize = video.filesize
+        # Ce qu'il reste à télécharger
+        size = contentsize - bytes_remaining
+        # Affichage dans la console
+        inserer_texte_console(str(round(size/contentsize*100)) + '%' + '\n' + convertions.poids_video(size) + '/' + convertions.poids_video(contentsize), clear_console=True)
+        # Actualisation sur la progress_bar
+        progress_bar['value'] = int(round(size/contentsize*100))
+        # Actualisation de la fenêtre
+        root.update()
 
 
+
+# -- Télécharger la vidéo --
 def telechargement():
-    global video
+    global video, is_video
+
+    # Récupération du flux selectionnée
     video = yt.streams.get_by_itag(id.get())
 
-
-
+    # Récupération du début et de la fin en seconde
     debut = int(combobox_debut_h.get())*3600 + int(combobox_debut_min.get())*60 + int(combobox_debut_sec.get())
     fin =  int(combobox_fin_h.get())*3600 + int(combobox_fin_min.get())*60 + int(combobox_fin_sec.get())
 
-
+    # Gestion des erreurs sur le début et la fin
     if fin > yt.length:
-        label_erreur['text'] = 'La fin est supérieure à la durée totale de la vidéo'
+        inserer_texte_console('La fin est supérieure à la durée totale de la vidéo', clear_console=True, root_update=True)
         return None
-
     if debut > fin:
-        label_erreur['text'] = 'Le début est supérieur à la fin'
+        inserer_texte_console('Le début est supérieur à la fin', clear_console=True, root_update=True)
         return None
-    
     if debut == fin:
-        label_erreur['text'] = 'Le début est égal à la fin'
+        inserer_texte_console('Le début est égal à la fin', clear_console=True, root_update=True)
         return None
 
-    
-    if video.is_progressive == False:
-        audio_for_video = audio(yt)
-        print(audio_for_video)
+    # On formate le titre de la vidéo (suppression des : caractères spéciaux, espaces, emojis, etc)
+    file_name = convertions.formatage_video_name(video.default_filename)
 
-        file_name = formatage_video_name(audio_for_video.default_filename)
+    # Si le flux ne contient pas l'audio
+    if video.is_progressive == False:
+        # On télécharge le fichier audio associé à l'extension du fichier vidéo
+        audio_for_video = audio(yt, video.mime_type.split('/')[1])
+
+        # On définie la sortie de la video temporaire et de l'audio temporaire
         video_path = 'video/temp/video_temp'
         audio_path = 'video/temp/audio_temp'
 
-
-        progress_bar['value'] = 50
-
-
-        print("Téléchargement de l'audio en cours...")
+        # Téléchargement de l'audio
+        is_video = False
+        inserer_texte_console("\nTéléchargement de l'audio en cours...", clear_console=True, root_update=True)
         audio_for_video.download(output_path=audio_path, filename=file_name)
                 
-
-        print("Téléchargement de la video en cours...")
+        # Téléchargement de la vidéo
+        is_video = True
+        inserer_texte_console("\nTéléchargement de la video en cours...", clear_console=True, root_update=True)
         video.download(output_path=video_path, filename=file_name)
 
-        print("Fusion de la video et de l'audio en cours...")
+        # Fusion de la vidéo et de l'audio
+        inserer_texte_console("\nFusion de la video et de l'audio en cours...", clear_console=True, root_update=True)
         fusionner_video_audio((video_path + '/' + file_name), (audio_path + '/' + file_name), (sortie + '/' + file_name))
 
+        # Suppression de la video temporaire et de l'audio temporaire
         supprimer_fichier_dossier('video/temp/video_temp')
         supprimer_fichier_dossier('video/temp/audio_temp')
+    
+    # Si le flux contient l'audio
     else:
-        file_name = formatage_video_name(video.default_filename)
-        video_path = 'video/temp/video_temp'
-        print("Téléchargement de la video en cours...")
+        # Téléchargement de la vidéo
+        inserer_texte_console("Téléchargement de la video en cours...", clear_console=True, root_update=True)
+        is_video = True
         video.download(output_path=sortie + '/', filename=file_name)
 
-
+    # Si l'utilisateur veut télécharger une portion de la vidéo
     if debut != 0 or fin != yt.length:
         ffmpeg_extract_subclip(sortie + '/' + file_name, debut, fin)
+        inserer_texte_console("\nSéparation de l'extrait selectionné...", clear_console=True, root_update=True)
+
+    inserer_texte_console("Téléchargement de la video terminé !", clear_console=True, root_update=True)
 
     print(sortie)
+
+    # Ouverture du dossier contenant la vidéo
     subprocess.Popen(r'explorer /select,"' + sortie.replace('/', '\\') + '\\' + file_name + r'"')
     
 
 
+# -- Télécharger la miniature dans la meilleure qualité disponible --
 def telecharger_miniature():
     global sortie, short_url
-    urlretrieve('http://img.youtube.com/vi/' + short_url + '/maxresdefault.jpg', sortie + '/' + formatage_video_name_without_extension(yt.title) + '.jpg')
+    urlretrieve('http://img.youtube.com/vi/' + short_url + '/maxresdefault.jpg', sortie + '/' + convertions.formatage_video_name_without_extension(yt.title) + '.jpg')
 
 
 
  # -- Convertir vidéo --
 def convertir_video():
-
     try:
+        inserer_texte_console('Convertion en cours...', clear_console=True, root_update=True)
         global url, short_url, yt, img
 
+        if '&' in entry_link.get():
+            for l in range(len(entry_link.get())):
+                if entry_link.get()[l] == '&':
+                    lien_temp = entry_link.get()[0:l]
+                    clear_entry()
+                    entry_link.insert(0, lien_temp)
+                    root.update()
+                    break
 
+        # URL de la vidéo
         url = str(entry_link.get())
 
+        # ID de la vidéo
         short_url = convertir_url(str(entry_link.get()))
+        print(short_url)
 
+        # Convertion de la vidéo
         yt = YouTube(entry_link.get(), on_progress_callback=progress)
 
-
+        # MINIATURE
+            # Téléchargement de la miniature
         urlretrieve('http://img.youtube.com/vi/' + short_url + '/maxresdefault.jpg', 'video/temp/minia_temp/img.jpg')
-
+            # Redimensionnement de la miniature
         img = ImageTk.PhotoImage(Image.open('video/temp/minia_temp/img.jpg').resize((16*15, 9*15)))
-
+            # Affichage de la miniature
         miniature["image"] = img
+            # Suppression de la mminiature
         supprimer_fichier_dossier('video/temp/minia_temp')
-        label_titre["text"] = "Titre : " + titre_ligne(yt.title)
+
+        # TITRE 
+        label_titre["text"] = "Titre : " + convertions.titre_ligne(yt.title)
+
+        # CHAINE
         label_chaine["text"] = "Chaîne : " + yt.author
-        label_vues["text"] = "Vues : " + nb_vues(yt.views)
-        h, min, sec = duree(yt.length)
+
+        # VUES
+        label_vues["text"] = "Vues : " + convertions.nb_vues(yt.views)
+
+        # DUREE
+        h, min, sec = convertions.duree(yt.length)
+            # Si durée est inferieur à 1 minutes
         if yt.length < 60:
             label_duree["text"] = "Durée : " + str(sec) + "s"
+            # Sinon si la durée est inferieur à  1 heure
         elif yt.length < 3600:
             label_duree["text"] = "Durée : " + str(min) + "m " + str(sec) + "s"
+            # Si la durée est supérieure à 1 heure
         else:
             label_duree["text"] = "Durée : " + str(h) + "h " + str(min) + "m " + str(sec) + "s"
         
@@ -292,37 +359,40 @@ def convertir_video():
             # Ligne pour faire le rapport
         ratio.create_line(0, 0, likes/somme*200, 0, fill="blue", width=7)
         ratio.create_line(likes/somme*200, 0, (likes/somme)*200+(dislikes/somme)*200, 0, fill="red", width=7)
-            # Likes
+            # LIKES
+                # Likes
         label_likes["fg"] = 'blue'
-        label_likes["text"] = '👍' + nb_vues(likes)
-            
+        label_likes["text"] = '👍' + convertions.nb_vues(likes)
+                # Pourcentage likes
         label_pourcentages_likes["text"] = str(round(likes/somme*100)) + '%'
         label_pourcentages_likes["fg"] = 'blue'
-        
+            # DISLIKES
+                # Dislikes
         label_dislikes["fg"] = 'red'
-        label_dislikes["text"] = nb_vues(dislikes) + '👎'
-
+        label_dislikes["text"] = convertions.nb_vues(dislikes) + '👎'
+                # Pourcentage Dislikes
         label_pourcentages_dislikes["text"] = str(round(dislikes/somme*100)) + '%'
         label_pourcentages_dislikes["fg"] = 'red'
 
+        # Affichage de tout les flux
         choix_video(yt.streams)
 
+        # Bouton Télécharger Vidéo
         button_telecharger_video = Button(information, text='Télécharger', command=telechargement, pady=4, padx=9)
         button_telecharger_video.pack(pady=(20, 0))
 
+        # Bouton Télécharger miniature
         button_telecharger_miniature = Button(information, text='Télécharger la miniature', command=telecharger_miniature)
         button_telecharger_miniature.pack(pady=(20, 0))
 
 
-
-
-        # Frame : Choisir durée de la vidéo à télécharger
+        # FRAME : Choisir durée de la vidéo à télécharger
         global combobox_debut_h, combobox_debut_min, combobox_debut_sec, combobox_fin_h, combobox_fin_min, combobox_fin_sec, select_time
         select_time = Frame(tab2)
         select_time.pack(expand=1)
         pady_select_time = 5
             # DEBUT
-                # Lael début
+                # Label début
         label_debut = Label(select_time, text='Début : ')
         label_debut.grid(column=0, row=0, sticky=E, pady=pady_select_time)
                 # Heure
@@ -380,41 +450,49 @@ def convertir_video():
         label_fin_sec.grid(column=6, row=1, pady=pady_select_time)
 
 
-        global progress_bar
-        progress_bar = ttk.Progressbar(select_time, orient='horizontal', length=350, mode='determinate')
-        progress_bar.grid(column=0, row=2, columnspan=7)
-
         # Afficher automatiquement le deuxième onglet
         tabControl.select(tab2)
 
+        inserer_texte_console('\nConvertion effectuée !', clear_console=True)
+
 
     except pytube.exceptions.RegexMatchError:
-        label_erreur["text"] = 'Erreur de lien'
+        inserer_texte_console('Erreur de lien', clear_console=True)
 
 
 
-
+# -- Permet à l'utilisateur de choisir la sortie par défaut
 def dialogue_chemin():
     global sortie
+    # Selection de la sortie par l'utilisateur
     sortie = filedialog.askdirectory()
+    # Ecriture de la sortie dans sortie.data
     with open ('sortie.data', "w") as fichier_sortie:
         fichier_sortie.write(sortie)
+    # Ecriture de la sortie dans entry_chemin_destination
     entry_chemin_destination.delete(0, len(entry_chemin_destination.get()))
     entry_chemin_destination.insert(0, sortie)
 
+
+
+# -- Permet à l'utilisateur de choisir le Burean en tant que sortie par défaut
 def select_desktop():
+    global sortie
+    # Affecte le Bureau comme sortie par défaut
     sortie = os.path.expanduser('~') + r"\Desktop"
+    # Ecriture de la sortie dans entry_chemin_destination
     entry_chemin_destination.delete(0, len(entry_chemin_destination.get()))
     entry_chemin_destination.insert(0, sortie)
+    # Ecriture de la sortie dans sortie.data
     with open('sortie.data', 'w') as fichier_sortie:
         fichier_sortie.write(sortie)
 
 
-    
 
 
-# == FIN FONCTIONS ==
-
+# =======================
+#         TKINTER
+# =======================
 
 
 
@@ -425,14 +503,20 @@ root.iconbitmap('images/youtube.ico')
 
 root.resizable(False, False)
 
-hauteur = 550
+hauteur = 600
 largeur = 800
 root.geometry(str(largeur) + 'x' + str(hauteur))
 
 
 
-# -- Configuration des onglets Video et Options de téléchargement
-tabControl = ttk.Notebook(root)
+# -- Configuration de tabControl_et_Console
+tabControl_et_Console = Frame(root)
+tabControl_et_Console.pack(expand = 1, fill ="both", side=LEFT)
+
+
+
+# -- Configuration de TabControl
+tabControl = ttk.Notebook(tabControl_et_Console, height=497)
 
 tab1 = Frame(tabControl)
 tab2 = Frame(tabControl)
@@ -441,35 +525,17 @@ tab3 = Frame(tabControl)
 style_menu = ttk.Style()
 style_menu.configure('TNotebook.Tab', font='Calibri 11')
 
-tabControl.add(tab1, text ='Convertion')
-tabControl.add(tab2, text ='Options de téléchargement')
-tabControl.add(tab3, text = 'Paramètres')
+tabControl.add(tab1, text='Convertion')
+tabControl.add(tab2, text='Options de téléchargement')
+tabControl.add(tab3, text='Paramètres')
 
-tabControl.pack(expand = 1, fill ="both", side=LEFT)
+tabControl.pack(fill ="both")
 
 tabControl.select(tab1)
 
-def touche_convertir(event):
-    convertir_video()
-
-root.bind('<Return>', touche_convertir)
 
 
-
-# Options de téléchargement
-tab_2_Control = ttk.Notebook(tab2)
-
-tab2_video = Frame(tab_2_Control, height=380)
-tab2_audio = Frame(tab_2_Control, height=380)
-
-tab_2_Control.add(tab2_video, text='Vidéo')
-tab_2_Control.add(tab2_audio, text='Audio')
-
-tab_2_Control.pack(expand=False, fill="x", side=TOP)
-
-
-
-# -- Frame : tab1 -> root
+# -- Convertion
 
 label_link = Label(tab1, text='Lien de la vidéo :', pady=20)
 label_link.grid(column=0, row=0, columnspan=2)
@@ -486,17 +552,49 @@ button_delete.grid(column=1, row=1, padx=(0, 75))
 button_link = Button(tab1, text="Convertir", command=convertir_video, padx=15, pady=6)
 button_link.grid(column=0, row=2, pady=15, columnspan=2)
 
-label_erreur = Label(tab1, text=None, fg='red')
-label_erreur.grid(column=0, row=3, columnspan=2)
-
 tab1.columnconfigure(0, weight=1)
 
+def touche_convertir(event):
+    convertir_video()
 
-# -- Frame : information --
+root.bind('<Return>', touche_convertir)
+
+
+
+# -- Options de téléchargement --
+tab_2_Control = ttk.Notebook(tab2)
+
+tab2_video = Frame(tab_2_Control, height=380)
+tab2_audio = Frame(tab_2_Control, height=380)
+
+tab_2_Control.add(tab2_video, text='Vidéo')
+tab_2_Control.add(tab2_audio, text='Audio')
+
+tab_2_Control.pack(expand=False, fill="x", side=TOP)
+
+
+
+# -- Paramètres --
+label_chemin_destination = Label(tab3, text='Destination par défaut :')
+label_chemin_destination.grid(column=0, row=0, padx=(10, 0), pady=(10, 0))
+
+entry_chemin_destination = Entry(tab3, width=0)
+entry_chemin_destination.grid(column=1, row=0, padx=(10, 5), pady=(10, 0))
+entry_chemin_destination.insert(0, sortie)
+
+selec_chemin_destination = Button(tab3, text="Parcourir", command=dialogue_chemin)
+selec_chemin_destination.grid(column=2, row=0, pady=(10, 0), padx=(10, 0))
+
+button_desktop = Button(tab3, text='Par défault (Bureau)', command=select_desktop)
+button_desktop.grid(column=3, row=0, pady=(10, 0), padx=(10, 0))
+
+
+
+# -- Information --
 information = Frame(root)
 information.config(width=270)
 information.pack_propagate(False)
-information.pack(side=RIGHT, fill="both")
+information.pack(side=RIGHT, fill="y")
 
     # Label Info
 label_info = Label(information, text="Informations de la vidéo :", pady=15)
@@ -539,20 +637,17 @@ label_pourcentages_dislikes.pack(side='right', anchor='n', padx=(30, 5))
 
 
 
-# -- Frame: Paramètres --
-label_chemin_destination = Label(tab3, text='Destination par défaut :')
-label_chemin_destination.grid(column=0, row=0, padx=(10, 0), pady=(10, 0))
+# -- Console --
+frame_console = Frame(tabControl_et_Console)
+frame_console.pack(fill="both", expand=1)
+frame_console.pack_propagate(False)
 
-entry_chemin_destination = Entry(tab3, width=0)
-entry_chemin_destination.grid(column=1, row=0, padx=(10, 5), pady=(10, 0))
-entry_chemin_destination.insert(0, sortie)
+global progress_bar
+progress_bar = ttk.Progressbar(frame_console, orient='horizontal', length=450, mode='determinate')
+progress_bar.pack()
 
-selec_chemin_destination = Button(tab3, text="Parcourir", command=dialogue_chemin)
-selec_chemin_destination.grid(column=2, row=0, pady=(10, 0), padx=(10, 0))
-
-button_desktop = Button(tab3, text='Par défault (Bureau)', command=select_desktop)
-button_desktop.grid(column=3, row=0, pady=(10, 0), padx=(10, 0))
-
+output_log = Text(frame_console)
+output_log.pack()
 
 
 
@@ -561,4 +656,5 @@ if __name__ == "__main__":
     root.mainloop()
 
 # https://www.youtube.com/watch?v=bBkH4mQK050
+# https://www.youtube.com/watch?v=hgrUj1qMNHk
     
