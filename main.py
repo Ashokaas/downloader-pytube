@@ -148,12 +148,17 @@ def choix_video(streams):
     # Pour chaque flux "stream" dans video:
     for stream in streams:
         type_stream = stream.mime_type.split("/")
+        if type_stream[0] == 'video':
+            type_stream[0] = 'Vidéo'
+        elif type_stream[0] == 'audio':
+            type_stream[0] = 'Audio'
+        type_stream[1] = '.' + type_stream[1]
         type_stream = {"type": type_stream[0], "extension": type_stream[1]}
         # S'il est une video/n'est pas un audio
-        if type_stream['type'] == "video":
+        if type_stream['type'] == "Vidéo":
             # Ajout d'un dico contenant des infos cool qur la video
             liste_video.append({"type": type_stream["type"], "extension": type_stream["extension"], "resolution": stream.resolution, "fps": (str(stream.fps) + "fps"), "taille": convertions.poids_video(stream.filesize), "itag": stream.itag})
-        elif type_stream['type'] == "audio":
+        elif type_stream['type'] == "Audio":
             liste_audio.append({"type": type_stream["type"], "extension": type_stream["extension"], "kbps": stream.abr, "taille": convertions.poids_video(stream.filesize), "itag": stream.itag})
     # Tri décroissant en fonction : resolution, fps, taille
     liste_video.sort(key=lambda element:(int(element['resolution'][0:-1]), int(element['fps'][0:-3]), float(element['taille'][0:-2])), reverse=True)
@@ -162,40 +167,50 @@ def choix_video(streams):
     id = IntVar()
     colonne = 0
     ligne = 0
-    x = 3
+    x = 2
     y = 2
+    Label(tab2_video, text='Type').grid(row=0, column=1)
+    Label(tab2_video, text='Extension').grid(row=0, column=2)
+    Label(tab2_video, text='Resolution').grid(row=0, column=3)
+    Label(tab2_video, text='FPS').grid(row=0, column=4)
+    Label(tab2_video, text='Taille').grid(row=0, column=5)
     for i in range(len(liste_video)):
         if i > 12:
             colonne = 6
             ligne = -13
-        if liste_video[i]["type"] == "audio":
-            tab = tab2_audio
-        elif liste_video[i]["type"] == "video":
-            tab = tab2_video
-        Radiobutton(tab, variable=id, value=liste_video[i]["itag"]).grid(column=0+colonne, row=i+ligne, padx=x, pady=y)
-        Label(tab, text=liste_video[i]["type"]).grid(column=1+colonne, row=i+ligne, padx=x, pady=y)
-        Label(tab, text=liste_video[i]["extension"]).grid(column=2+colonne, row=i+ligne, padx=x, pady=y)
-        Label(tab, text=liste_video[i]["resolution"]).grid(column=3+colonne, row=i+ligne, padx=x, pady=y)
-        Label(tab, text=liste_video[i]["fps"]).grid(column=4+colonne, row=i+ligne, padx=x, pady=y)
-        Label(tab, text=liste_video[i]["taille"]).grid(column=5+colonne, row=i+ligne, padx=x, pady=y)
+            Label(tab2_video, text='Type').grid(row=0, column=1+colonne)
+            Label(tab2_video, text='Extension').grid(row=0, column=2+colonne)
+            Label(tab2_video, text='Resolution').grid(row=0, column=3+colonne)
+            Label(tab2_video, text='FPS').grid(row=0, column=4+colonne)
+            Label(tab2_video, text='Taille').grid(row=0, column=5+colonne)
+        Radiobutton(tab2_video, variable=id, value=liste_video[i]["itag"]).grid(column=0+colonne, row=1+i+ligne, padx=x, pady=y)
+        Label(tab2_video, text=liste_video[i]["type"]).grid(column=1+colonne, row=1+i+ligne, padx=x, pady=y)
+        Label(tab2_video, text=liste_video[i]["extension"]).grid(column=2+colonne, row=1+i+ligne, padx=x, pady=y)
+        Label(tab2_video, text=liste_video[i]["resolution"]).grid(column=3+colonne, row=1+i+ligne, padx=x, pady=y)
+        Label(tab2_video, text=liste_video[i]["fps"]).grid(column=4+colonne, row=1+i+ligne, padx=x, pady=y)
+        Label(tab2_video, text=liste_video[i]["taille"]).grid(column=5+colonne, row=1+i+ligne, padx=x, pady=y)
     print(liste_audio)
     colonne = 0
     ligne = 0
-    x = 4
-    y = 3
+    x = 2
+    y = 2
+    Label(tab2_audio, text='Type').grid(row=0, column=1)
+    Label(tab2_audio, text='Extension').grid(row=0, column=2)
+    Label(tab2_audio, text='Bitrate').grid(row=0, column=3)
+    Label(tab2_audio, text='Taille').grid(row=0, column=4)
     for e in range(len(liste_audio)):
         if e > 12:
             colonne = 6
             ligne = -13
-        if liste_audio[e]["type"] == "audio":
-            tab = tab2_audio
-        elif liste_audio[e]["type"] == "video":
-            tab = tab2_video
-        Radiobutton(tab, variable=id, value=liste_audio[e]["itag"]).grid(column=0+colonne, row=e+ligne, padx=x, pady=y)
-        Label(tab, text=liste_audio[e]["type"]).grid(column=1+colonne, row=e+ligne, padx=x, pady=y)
-        Label(tab, text=liste_audio[e]["extension"]).grid(column=2+colonne, row=e+ligne, padx=x, pady=y)
-        Label(tab, text=liste_audio[e]["kbps"]).grid(column=3+colonne, row=e+ligne, padx=x, pady=y)
-        Label(tab, text=liste_audio[e]["taille"]).grid(column=4+colonne, row=e+ligne, padx=x, pady=y)
+            Label(tab2_audio, text='Type').grid(row=0, column=1+colonne)
+            Label(tab2_audio, text='Extension').grid(row=0, column=2+colonne)
+            Label(tab2_audio, text='Bitrate').grid(row=0, column=3+colonne)
+            Label(tab2_audio, text='Taille').grid(row=0, column=4+colonne)
+        Radiobutton(tab2_audio, variable=id, value=liste_audio[e]["itag"]).grid(column=0+colonne, row=1+e+ligne, padx=x, pady=y)
+        Label(tab2_audio, text=liste_audio[e]["type"]).grid(column=1+colonne, row=1+e+ligne, padx=x, pady=y)
+        Label(tab2_audio, text=liste_audio[e]["extension"]).grid(column=2+colonne, row=1+e+ligne, padx=x, pady=y)
+        Label(tab2_audio, text=liste_audio[e]["kbps"]).grid(column=3+colonne, row=1+e+ligne, padx=x, pady=y)
+        Label(tab2_audio, text=liste_audio[e]["taille"]).grid(column=4+colonne, row=1+e+ligne, padx=x, pady=y)
 
     
 
@@ -504,7 +519,7 @@ root.iconbitmap('images/youtube.ico')
 root.resizable(False, False)
 
 hauteur = 600
-largeur = 800
+largeur = 850
 root.geometry(str(largeur) + 'x' + str(hauteur))
 
 
@@ -547,7 +562,7 @@ entry_link.bind("<Button - 3>", copy)
 photo = PhotoImage(file = r"images/delete.png").subsample(20, 20) 
 
 button_delete = Button(tab1, command=clear_entry, image=photo)
-button_delete.grid(column=1, row=1, padx=(0, 75))
+button_delete.grid(column=1, row=1, padx=(0, 103))
 
 button_link = Button(tab1, text="Convertir", command=convertir_video, padx=15, pady=6)
 button_link.grid(column=0, row=2, pady=15, columnspan=2)
