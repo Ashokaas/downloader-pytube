@@ -32,6 +32,10 @@ import threading
 
 # Historique
 import csv
+from csv import writer
+
+# Notifications
+from win10toast import ToastNotifier
 
 
 
@@ -332,6 +336,8 @@ def telechargement(yt, id, combobox_debut_h, combobox_debut_min, combobox_debut_
     button_telecharger_miniature.destroy()
     button_telecharger_video.destroy()
 
+    ToastNotifier().show_toast("Numérisateur Original Universel Biochimique", "Le téléchargement de votre vidéo '" + video.title + "' est terminé", icon_path='miniatures_history'+short_url+'jpg')
+
     
 
 # -- Télécharger la miniature dans la meilleure qualité disponible --
@@ -365,10 +371,7 @@ def convertir_video():
                     entry_link.insert(0, lien_temp)
                     root.update()
                     break
-
-        
-
-        
+    
 
         # URL de la vidéo
         url = str(entry_link.get())
@@ -379,6 +382,18 @@ def convertir_video():
 
         # Convertion de la vidéo
         yt = YouTube(entry_link.get(), on_progress_callback=progress)
+
+
+        
+        nouvelle_video_history = [entry_link.get(), yt.views, yt.author, yt.length]
+        with open('history.csv', 'a', newline='') as file:
+            writer_object = writer(file, delimiter=";")
+            # Result - a writer object
+            # Pass the data in the list as an argument into the writerow() function
+            writer_object.writerow(nouvelle_video_history)  
+            # Close the file object
+            file.close()
+
 
         # MINIATURE
             # Téléchargement de la miniature
@@ -772,15 +787,15 @@ widgets_historique = []
 for r in range(min(len(historique), 5)):
     widgets_historique.append(Label(tab4, image=None))
     widgets_historique[-1].grid(column=0, row=r+1, padx=6, pady=5)
-    miniature_history = ImageTk.PhotoImage(Image.open('miniatures_history/' + convertir_url(historique[0]['url']) + '.jpg').resize((16*10, 9*10)))
-    widgets_historique[-1]['image'] = miniature_history
-    widgets_historique.append(Label(tab4, text=convertions.titre_ligne(historique[r]['titre'])))
+    widgets_historique.append(ImageTk.PhotoImage(Image.open('miniatures_history/' + convertir_url(historique[0]['url']) + '.jpg').resize((16*10, 9*10))))
+    widgets_historique[-2]['image'] = widgets_historique[-1]
+    widgets_historique.append(Label(tab4, text=convertions.titre_ligne(YouTube(historique[r]['url']).title)))
     widgets_historique[-1].grid(column=1, row=r+1)
-    widgets_historique.append(Label(tab4, text=convertions.titre_ligne(convertions.nb_vues(historique[r]['vues']))))
+    widgets_historique.append(Label(tab4, text=convertions.nb_vues(historique[r]['vues'])))
     widgets_historique[-1].grid(column=2, row=r+1)
-    widgets_historique.append(Label(tab4, text=convertions.titre_ligne(historique[r]['chaine'])))
+    widgets_historique.append(Label(tab4, text=historique[r]['chaine']))
     widgets_historique[-1].grid(column=3, row=r+1)
-    widgets_historique.append(Label(tab4, text=convertions.titre_ligne(historique[r]['duree'])))
+    widgets_historique.append(Label(tab4, text=convertions.duree(int(historique[r]['duree']))))
     widgets_historique[-1].grid(column=4, row=r+1)
 
 

@@ -83,8 +83,9 @@ def titre_ligne(titre):
 if __name__ == "__main__":
     #print(poids_video(369864896))
     #print(formatage_video_name("https://www.youtube.com/watch?v=bBkH4mQK050"))
-    print(nb_vues(4973330999)[-1])
+    #print(nb_vues(4973330999)[-1])
     #print(titre_ligne("Rick Astley - Never Gonna Give You Up (Official Music Video)"))
     #titre = "Pourquoi les consoles portables manquent au jeu vidéo | Débat & Opinion"
     #print(titre_ligne(titre))
     #print(duree(3660))
+    print(formatage_video_name_without_extension("La SCIENCE des EMBOUTEILLAGES"))
