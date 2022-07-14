@@ -1,4 +1,5 @@
 from time import strftime, gmtime
+import re
 
 
 # -- Convertir les secondes en temps lisible
@@ -19,33 +20,38 @@ def poids_video(poids:int):
         return (str(round(poids*10**-9, 2)) + "go")
 
 
-def formatage_video_name_without_extension(video_name):
-    
-    video_name_nouv = ""
-    for i in range(len(video_name)):
-        if 97 <= ord(video_name[i]) <= 122 or ord(video_name[i]) == 32:
-            video_name_nouv += video_name[i]
-    video_name_nouv = video_name_nouv.split()
-    video_name_nouv_nouv = ""
-    for e in range(len(video_name_nouv)):
-        if e+1 == len(video_name_nouv):
-            video_name_nouv_nouv += video_name_nouv[e]
-        else:
-            video_name_nouv_nouv += video_name_nouv[e] + "_"
-    return video_name_nouv_nouv
 
 
 # -- Rend le nom de la video plus lisible
-def formatage_video_name(video_name:str):
-    for a in range(len(video_name)):
-        if video_name[a] == ".":
-            extension = video_name[a:-1] + video_name[-1]
-            break
-    print(extension)
-    video_name = video_name.lower()
-    video_name_nouv_nouv = formatage_video_name_without_extension(video_name)
+def formatage_video_name(video_name:str, video_extension:bool):
+    # Si l'extension est incluse dans le nom de la vidéo
+    if video_extension == True:
+        # On inverse le nom de la vidéo afin de récupérer le premier "." du nom
+        video_name_extension = video_name[::-1]
+        # Pour chaque caractère du nom de la vidéo
+        for a in range(len(video_name_extension)):
+            # Si le caractère est "."
+            if video_name_extension[a] == ".":
+                # Alors l'extension est égale à tous les caractères jusqu'au "."
+                extension = video_name_extension[0:a] + video_name_extension[a]
+                # Comme on a inversé le titre on doit le réinverser pour avoir la vrai extension ("4pm. -> .mp4")
+                extension = extension[::-1]
+                # On supprime l'extension du nom de la vidéo
+                video_name = video_name[0:len(video_name)-len(extension)]
+                break
+        
+    # On garde uniquement les caractères allant de : 'A' -> 'Z', de 'a' -> 'z' et l'espace ' '
+    # On remplace les espaces par des '_'
+    # On met tout en minuscule
+    video_name = re.sub(r"[^a-zA-Z0-9- ]","",video_name).replace(" ", "_").lower()
 
-    return video_name_nouv_nouv[0: -len(extension)] + extension
+    # Si l'extension est incluse on la rajoute car on l'a supprimé avant
+    if video_extension == True:
+        video_name = video_name + extension
+
+    return video_name
+
+
 
 
 def nb_vues(vues):
@@ -78,6 +84,7 @@ def titre_ligne(titre):
     return titre_return
 
 
+
         
 
 if __name__ == "__main__":
@@ -88,4 +95,6 @@ if __name__ == "__main__":
     #titre = "Pourquoi les consoles portables manquent au jeu vidéo | Débat & Opinion"
     #print(titre_ligne(titre))
     #print(duree(3660))
-    print(formatage_video_name_without_extension("La SCIENCE des EMBOUTEILLAGES"))
+    #print(formatage_video_name_without_extension("La SCIENCE des EMBOUTEILLAGES"))
+    print(formatage_video_name("Hey! What's up bro?.mp4", True))
+

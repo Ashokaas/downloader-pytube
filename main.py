@@ -336,14 +336,14 @@ def telechargement(yt, id, combobox_debut_h, combobox_debut_min, combobox_debut_
     button_telecharger_miniature.destroy()
     button_telecharger_video.destroy()
 
-    ToastNotifier().show_toast("Numérisateur Original Universel Biochimique", "Le téléchargement de votre vidéo '" + video.title + "' est terminé", icon_path='miniatures_history'+short_url+'jpg')
+    ToastNotifier().show_toast("Numérisateur Original Universel Biochimique", f"Le téléchargement de votre vidéo '{video.title}' est terminé", icon_path=f"miniatures_history/{short_url}.jpg")
 
     
 
 # -- Télécharger la miniature dans la meilleure qualité disponible --
 def telecharger_miniature():
     global sortie, short_url
-    urlretrieve('http://img.youtube.com/vi/' + short_url + '/maxresdefault.jpg', sortie + '/' + convertions.formatage_video_name_without_extension(yt.title) + '.jpg')
+    urlretrieve(f'http://img.youtube.com/vi/{short_url}/maxresdefault.jpg', f'{sortie}/{convertions.formatage_video_name(yt.title, video_extension=False)}.jpg')
 
 
 
@@ -385,7 +385,7 @@ def convertir_video():
 
 
         
-        nouvelle_video_history = [entry_link.get(), yt.views, yt.author, yt.length]
+        nouvelle_video_history = [entry_link.get(), convertions.formatage_video_name(yt.title, False), yt.views, yt.author, yt.length]
         with open('history.csv', 'a', newline='') as file:
             writer_object = writer(file, delimiter=";")
             # Result - a writer object
@@ -562,9 +562,9 @@ entry_link = Entry(tab1, width=50)
 entry_link.grid(column=0, row=1, columnspan=2)
 entry_link.bind("<Button - 3>", copy)
 
-photo = PhotoImage(file = r"images/delete.png").subsample(20, 20) 
+icon_delete = PhotoImage(file = r"images/delete.png").subsample(20, 20) 
 
-button_delete = Button(tab1, command=clear_entry, image=photo)
+button_delete = Button(tab1, command=clear_entry, image=icon_delete)
 button_delete.grid(column=1, row=1, padx=(0, 103))
 
 button_link = Button(tab1, text="Convertir", command=convertir_video, padx=15, pady=6)
@@ -759,6 +759,7 @@ label_fin_sec.grid(column=6, row=1, pady=pady_select_time)
 
 
 
+
 historique = []
 with open('history.csv', newline='') as history_file:
     reader = csv.DictReader(history_file, delimiter=';')
@@ -767,7 +768,6 @@ with open('history.csv', newline='') as history_file:
 
 historique = historique[::-1][0:min(len(historique), 6)]
 print(historique)
-
 
 
 label_history_minia = Label(tab4, text='Miniature')
@@ -786,15 +786,24 @@ label_history_minia = Label(tab4, text='Durée')
 label_history_minia.grid(column=4, row=0)
 
 widgets_historique = []
+button_download = []
+
+
 for r in range(min(len(historique), 5)):
+
+    
+
     widgets_historique.append(Label(tab4, image=None))
     widgets_historique[-1].grid(column=0, row=r+1, padx=6, pady=5)
     widgets_historique.append(ImageTk.PhotoImage(Image.open('miniatures_history/' + convertir_url(historique[r]['url']) + '.jpg').resize((16*6, 9*6))))
     widgets_historique[-2]['image'] = widgets_historique[-1]
-    widgets_historique.append(Label(tab4, text=convertions.titre_ligne(YouTube(historique[r]['url']).title), font=("TkDefaultFont", 7)))
+
+    widgets_historique.append(Label(tab4, text=convertions.titre_ligne(historique[r]['titre'].replace("_", " ")), font=("TkDefaultFont", 7)))
     widgets_historique[-1].grid(column=1, row=r+1)
+
     widgets_historique.append(Label(tab4, text=convertions.nb_vues(historique[r]['vues']), font=("TkDefaultFont", 7)))
     widgets_historique[-1].grid(column=2, row=r+1)
+
     widgets_historique.append(Label(tab4, text=historique[r]['chaine'], font=("TkDefaultFont", 7)))
     widgets_historique[-1].grid(column=3, row=r+1)
 
@@ -811,6 +820,13 @@ for r in range(min(len(historique), 5)):
     
     widgets_historique.append(Label(tab4, text=oui, font=("TkDefaultFont", 7)))
     widgets_historique[-1].grid(column=4, row=r+1)
+    '''
+    icon_download = PhotoImage(file = r"images/download.jpg").subsample(140, 140)
+    widgets_historique.append(Button(tab4, text=r))
+    widgets_historique[-1].config(command=oui_oui_oui)
+    widgets_historique[-1].grid(column=5, row=r+1)'''
+
+
 
 
 # Affichage de la fenêtre
