@@ -403,6 +403,8 @@ def convertir_video():
             # Affichage de la miniature
         miniature["image"] = img
 
+        
+
         # TITRE 
         label_titre["text"] = "Titre : " + convertions.titre_ligne(yt.title)
 
@@ -787,15 +789,27 @@ widgets_historique = []
 for r in range(min(len(historique), 5)):
     widgets_historique.append(Label(tab4, image=None))
     widgets_historique[-1].grid(column=0, row=r+1, padx=6, pady=5)
-    widgets_historique.append(ImageTk.PhotoImage(Image.open('miniatures_history/' + convertir_url(historique[0]['url']) + '.jpg').resize((16*10, 9*10))))
+    widgets_historique.append(ImageTk.PhotoImage(Image.open('miniatures_history/' + convertir_url(historique[r]['url']) + '.jpg').resize((16*6, 9*6))))
     widgets_historique[-2]['image'] = widgets_historique[-1]
-    widgets_historique.append(Label(tab4, text=convertions.titre_ligne(YouTube(historique[r]['url']).title)))
+    widgets_historique.append(Label(tab4, text=convertions.titre_ligne(YouTube(historique[r]['url']).title), font=("TkDefaultFont", 7)))
     widgets_historique[-1].grid(column=1, row=r+1)
-    widgets_historique.append(Label(tab4, text=convertions.nb_vues(historique[r]['vues'])))
+    widgets_historique.append(Label(tab4, text=convertions.nb_vues(historique[r]['vues']), font=("TkDefaultFont", 7)))
     widgets_historique[-1].grid(column=2, row=r+1)
-    widgets_historique.append(Label(tab4, text=historique[r]['chaine']))
+    widgets_historique.append(Label(tab4, text=historique[r]['chaine'], font=("TkDefaultFont", 7)))
     widgets_historique[-1].grid(column=3, row=r+1)
-    widgets_historique.append(Label(tab4, text=convertions.duree(int(historique[r]['duree']))))
+
+    h_oui, m_oui, s_oui = convertions.duree(int(historique[r]['duree']))
+        # Si durée est inferieur à 1 minutes
+    if int(historique[r]['duree']) < 60:
+        oui = str(s_oui) + "s"
+        # Sinon si la durée est inferieur à  1 heure
+    elif int(historique[r]['duree']) < 3600:
+       oui = str(m_oui) + "m" + str(s_oui) + "s"
+        # Si la durée est supérieure à 1 heure
+    else:
+        oui = str(h_oui) + "h" + str(m_oui) + "m" + str(s_oui) + "s"
+    
+    widgets_historique.append(Label(tab4, text=oui, font=("TkDefaultFont", 7)))
     widgets_historique[-1].grid(column=4, row=r+1)
 
 
