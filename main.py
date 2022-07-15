@@ -332,9 +332,7 @@ def telechargement(yt, id, combobox_debut_h, combobox_debut_min, combobox_debut_
     # Ouverture du dossier contenant la vidéo
     subprocess.Popen(r'explorer /select,"' + sortie.replace('/', '\\') + '\\' + file_name + r'"')
     
-    global button_telecharger_video, button_telecharger_miniature
-    button_telecharger_miniature.destroy()
-    button_telecharger_video.destroy()
+
 
     ToastNotifier().show_toast("Numérisateur Original Universel Biochimique", f"Le téléchargement de votre vidéo '{video.title}' est terminé", icon_path=f"miniatures_history/{short_url}.jpg")
 
@@ -384,15 +382,21 @@ def convertir_video():
         yt = YouTube(entry_link.get(), on_progress_callback=progress)
 
 
-        
-        nouvelle_video_history = [entry_link.get(), convertions.formatage_video_name(yt.title, False), yt.views, yt.author, yt.length]
-        with open('history.csv', 'a', newline='') as file:
-            writer_object = writer(file, delimiter=";")
-            # Result - a writer object
-            # Pass the data in the list as an argument into the writerow() function
-            writer_object.writerow(nouvelle_video_history)  
-            # Close the file object
-            file.close()
+        enregistrer_url_history = True
+        for l in range(len(historique)):
+            if url == historique[l]['url']:
+                enregistrer_url_history = False
+                break
+
+        if enregistrer_url_history == True:
+            nouvelle_video_history = [entry_link.get(), convertions.formatage_video_name(yt.title, False), yt.views, yt.author, yt.length]
+            with open('history.csv', 'a', newline='') as file:
+                writer_object = writer(file, delimiter=";")
+                # Result - a writer object
+                # Pass the data in the list as an argument into the writerow() function
+                writer_object.writerow(nouvelle_video_history)  
+                # Close the file object
+                file.close()
 
 
         # MINIATURE
@@ -453,12 +457,12 @@ def convertir_video():
 
         global button_telecharger_video, button_telecharger_miniature
         # Bouton Télécharger Vidéo
-        button_telecharger_video = Button(information, text='Télécharger', command=new_thread_telechargement, pady=4, padx=9)
-        button_telecharger_video.pack(pady=(20, 0))
+        liste_widgets.append(Button(information, text='Télécharger', command=new_thread_telechargement, pady=4, padx=9))
+        liste_widgets[-1].pack(pady=(20, 0))
 
         # Bouton Télécharger miniature
-        button_telecharger_miniature = Button(information, text='Télécharger la miniature', command=telecharger_miniature)
-        button_telecharger_miniature.pack(pady=(20, 0))
+        liste_widgets.append(Button(information, text='Télécharger la miniature', command=telecharger_miniature))
+        liste_widgets[-1].pack(pady=(20, 0))
 
 
         combobox_fin_h.current(h)
@@ -673,8 +677,6 @@ output_log.pack()
 
 
 
-
-
 label_video_type_1 = Label(tab2_video, text='Type')
 label_video_type_1.grid(row=0, column=1)
 label_video_extension_1 = Label(tab2_video, text='Extension')
@@ -789,7 +791,17 @@ widgets_historique = []
 button_download = []
 
 
-for r in range(min(len(historique), 5)):
+
+id_history = IntVar()
+
+def history_url():
+    clear_entry()
+    entry_link.insert(0, historique[id_history.get()]['url'])
+    convertir_video()
+
+
+
+for r in range(min(len(historique), 7)):
 
     
 
@@ -826,12 +838,17 @@ for r in range(min(len(historique), 5)):
     widgets_historique[-1].config(command=oui_oui_oui)
     widgets_historique[-1].grid(column=5, row=r+1)'''
 
+    widgets_historique.append(Radiobutton(tab4, variable=id_history, value=r, command=history_url))
+    widgets_historique[-1].grid(column=6, row=r+1)
+
+
 
 
 
 # Affichage de la fenêtre
 if __name__ == "__main__":
     root.mainloop()
+    
 # https://www.youtube.com/watch?v=bBkH4mQK050
 # https://www.youtube.com/watch?v=hgrUj1qMNHk
     
