@@ -35,7 +35,7 @@ import csv
 from csv import writer
 
 # Notifications
-from win10toast import ToastNotifier
+from win10toast_click import ToastNotifier
 
 
 
@@ -330,11 +330,13 @@ def telechargement(yt, id, combobox_debut_h, combobox_debut_min, combobox_debut_
     print(sortie)
 
     # Ouverture du dossier contenant la vidéo
-    subprocess.Popen(r'explorer /select,"' + sortie.replace('/', '\\') + '\\' + file_name + r'"')
     
 
 
-    ToastNotifier().show_toast("Numérisateur Original Universel Biochimique", f"Le téléchargement de votre vidéo '{video.title}' est terminé", icon_path=f"miniatures_history/{short_url}.jpg")
+    ToastNotifier().show_toast(title="Numérisateur Original Universel Biochimique",
+                               msg=f"Le téléchargement de votre vidéo \n({video.title})\n est terminé", 
+                               icon_path="images/youtube.ico",
+                               callback_on_click=lambda:subprocess.Popen(r'explorer /select,"' + sortie.replace('/', '\\') + '\\' + file_name + r'"'))
 
     
 
@@ -400,12 +402,16 @@ def convertir_video():
 
 
         # MINIATURE
-            # Téléchargement de la miniature
-        urlretrieve('http://img.youtube.com/vi/' + short_url + '/maxresdefault.jpg', 'miniatures_history/' + short_url + '.jpg')
-            # Redimensionnement de la miniature
-        img = ImageTk.PhotoImage(Image.open('miniatures_history/' + short_url + '.jpg').resize((16*15, 9*15)))
-            # Affichage de la miniature
-        miniature["image"] = img
+        try:
+                # Téléchargement de la miniature
+            urlretrieve('http://img.youtube.com/vi/' + short_url + '/maxresdefault.jpg', 'miniatures_history/' + short_url + '.jpg')
+                # Redimensionnement de la miniature
+            img = ImageTk.PhotoImage(Image.open('miniatures_history/' + short_url + '.jpg').resize((16*15, 9*15)))
+                # Affichage de la miniature
+            miniature["image"] = img
+        except:
+            img = ImageTk.PhotoImage(Image.open('images/mainiature_non_disponible.png'))
+            miniature["image"] = img
 
         
 
@@ -589,13 +595,13 @@ root.bind('<Return>', touche_entree)
 # -- Options de téléchargement --
 tab_2_Control = ttk.Notebook(tab2)
 
-tab2_video = Frame(tab_2_Control, height=380)
-tab2_audio = Frame(tab_2_Control, height=380)
+tab2_video = Frame(tab_2_Control, height=385)
+tab2_audio = Frame(tab_2_Control, height=385)
 
 tab_2_Control.add(tab2_video, text='Vidéo')
 tab_2_Control.add(tab2_audio, text='Audio')
 
-tab_2_Control.pack(expand=False, fill="x", side=TOP)
+tab_2_Control.pack(expand=True, fill="both", side=TOP)
 
 
 
@@ -699,7 +705,7 @@ Label(tab2_audio, text='Taille').grid(row=0, column=4)
 # FRAME : Choisir durée de la vidéo à télécharger
 global combobox_debut_h, combobox_debut_min, combobox_debut_sec, combobox_fin_h, combobox_fin_min, combobox_fin_sec, select_time
 select_time = Frame(tab2)
-select_time.pack(expand=1)
+select_time.pack(side=BOTTOM)
 pady_select_time = 5
     # DEBUT
         # Label début
@@ -801,14 +807,18 @@ def history_url():
 
 
 
-for r in range(min(len(historique), 7)):
+for r in range(min(len(historique), 8)):
 
     
 
     widgets_historique.append(Label(tab4, image=None))
     widgets_historique[-1].grid(column=0, row=r+1, padx=6, pady=5)
-    widgets_historique.append(ImageTk.PhotoImage(Image.open('miniatures_history/' + convertir_url(historique[r]['url']) + '.jpg').resize((16*6, 9*6))))
-    widgets_historique[-2]['image'] = widgets_historique[-1]
+    try:
+        widgets_historique.append(ImageTk.PhotoImage(Image.open('miniatures_history/' + convertir_url(historique[r]['url']) + '.jpg').resize((16*6, 9*6))))
+        widgets_historique[-2]['image'] = widgets_historique[-1]
+    except:
+        widgets_historique.append(ImageTk.PhotoImage(Image.open('images/mainiature_non_disponible.png').resize((16*6, 9*6))))
+        widgets_historique[-2]['image'] = widgets_historique[-1]
 
     widgets_historique.append(Label(tab4, text=convertions.titre_ligne(historique[r]['titre'].replace("_", " ")), font=("TkDefaultFont", 7)))
     widgets_historique[-1].grid(column=1, row=r+1)
@@ -832,11 +842,7 @@ for r in range(min(len(historique), 7)):
     
     widgets_historique.append(Label(tab4, text=oui, font=("TkDefaultFont", 7)))
     widgets_historique[-1].grid(column=4, row=r+1)
-    '''
-    icon_download = PhotoImage(file = r"images/download.jpg").subsample(140, 140)
-    widgets_historique.append(Button(tab4, text=r))
-    widgets_historique[-1].config(command=oui_oui_oui)
-    widgets_historique[-1].grid(column=5, row=r+1)'''
+
 
     widgets_historique.append(Radiobutton(tab4, variable=id_history, value=r, command=history_url))
     widgets_historique[-1].grid(column=6, row=r+1)
