@@ -284,7 +284,7 @@ def telechargement(yt, id, combobox_debut_h, combobox_debut_min, combobox_debut_
         return None
 
     # On formate le titre de la vidéo (suppression des : caractères spéciaux, espaces, emojis, etc)
-    file_name = convertions.formatage_video_name(video.default_filename)
+    file_name = convertions.formatage_video_name(video.default_filename, True)
 
     # Si le flux ne contient pas l'audio
     if video.is_progressive == False:
@@ -848,6 +848,8 @@ for r in range(min(len(historique), 7)):
 # Affichage de la fenêtre
 if __name__ == "__main__":
     root.mainloop()
+
+
     
 # https://www.youtube.com/watch?v=bBkH4mQK050
 # https://www.youtube.com/watch?v=hgrUj1qMNHk
