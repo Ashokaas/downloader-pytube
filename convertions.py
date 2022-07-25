@@ -1,4 +1,3 @@
-from time import strftime, gmtime
 import re
 
 
@@ -14,6 +13,8 @@ def duree(tps:int):
 
 # -- Convertir les octets en mo/go
 def poids_video(poids:int):
+    # Si en convertissant le poids en mo il est inférieur à 1000mo alors on l'envoie en mo
+    # Sinon on l'envoie en go
     if poids*10**-6 < 1000:
         return (str(round(poids*10**-6, 2)) + "mo")
     else:
@@ -47,9 +48,9 @@ def formatage_video_name(video_name:str, video_extension:bool):
 
     # Si l'extension est incluse on la rajoute car on l'a supprimé avant
     if video_extension == True:
-        video_name = video_name + extension
-
-    return video_name
+        return video_name, extension
+    else:
+        return video_name
 
 
 
@@ -70,7 +71,6 @@ def nb_vues(vues):
 def titre_ligne(titre):
     titre = titre.split()
     titre_return = ""
-    len_mots = 0
     x = 0
     for i in range(len(titre)):
         if len(titre_return) > 25 and x > 3:

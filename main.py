@@ -199,7 +199,7 @@ def choix_video(streams):
             liste_widgets.append(Label(tab2_video, text='Taille'))
             liste_widgets[-1].grid(row=0, column=5+colonne)
             
-        liste_widgets.append(Radiobutton(tab2_video, variable=id, value=liste_video[i]["itag"]))
+        liste_widgets.append(Radiobutton(tab2_video, variable=id, value=liste_video[i]["itag"], cursor="hand2"))
         liste_widgets[-1].grid(column=0+colonne, row=1+i+ligne, padx=x, pady=y)
         liste_widgets.append(Label(tab2_video, text=liste_video[i]["type"]))
         liste_widgets[-1].grid(column=1+colonne, row=1+i+ligne, padx=x, pady=y)
@@ -230,7 +230,7 @@ def choix_video(streams):
             liste_widgets.append(Label(tab2_audio, text='Taille'))
             liste_widgets[-1].grid(row=0, column=4+colonne)
 
-        liste_widgets.append(Radiobutton(tab2_audio, variable=id, value=liste_audio[e]["itag"]))
+        liste_widgets.append(Radiobutton(tab2_audio, variable=id, value=liste_audio[e]["itag"], cursor="hand2"))
         liste_widgets[-1].grid(column=0+colonne, row=1+e+ligne, padx=x, pady=y)
         liste_widgets.append(Label(tab2_audio, text=liste_audio[e]["type"]))
         liste_widgets[-1].grid(column=1+colonne, row=1+e+ligne, padx=x, pady=y)
@@ -284,30 +284,26 @@ def telechargement(yt, id, combobox_debut_h, combobox_debut_min, combobox_debut_
         return None
 
     # On formate le titre de la vidéo (suppression des : caractères spéciaux, espaces, emojis, etc)
-    file_name = convertions.formatage_video_name(video.default_filename, True)
+    file_name, file_extension = convertions.formatage_video_name(video.default_filename, True)
 
     # Si le flux ne contient pas l'audio
     if video.is_progressive == False:
         # On télécharge le fichier audio associé à l'extension du fichier vidéo
         audio_for_video = audio(yt, video.mime_type.split('/')[1])
 
-        # On définie la sortie de la video temporaire et de l'audio temporaire
-        video_path = 'video/temp/video_temp'
-        audio_path = 'video/temp/audio_temp'
-
         # Téléchargement de l'audio
         is_video = False
         inserer_texte_console("\nTéléchargement de l'audio en cours...", clear_console=True, root_update=True)
-        audio_for_video.download(output_path=audio_path, filename=file_name)
+        audio_for_video.download(output_path=sortie, filename=file_name+'_audio'+file_extension)
                 
         # Téléchargement de la vidéo
         is_video = True
         inserer_texte_console("\nTéléchargement de la video en cours...", clear_console=True, root_update=True)
-        video.download(output_path=video_path, filename=file_name)
+        video.download(output_path=sortie, filename=file_name+'_video'+file_extension)
 
         # Fusion de la vidéo et de l'audio
         inserer_texte_console("\nFusion de la video et de l'audio en cours...", clear_console=True, root_update=True)
-        fusionner_video_audio((video_path + '/' + file_name), (audio_path + '/' + file_name), (sortie + '/' + file_name))
+        fusionner_video_audio((sortie + '/' + file_name + file_extension), (sortie + '/' + file_name+'_audio'+file_extension), (sortie + '/' + file_name+'_video'+file_extension))
 
         # Suppression de la video temporaire et de l'audio temporaire
         supprimer_fichier_dossier('video/temp/video_temp')
@@ -318,11 +314,11 @@ def telechargement(yt, id, combobox_debut_h, combobox_debut_min, combobox_debut_
         # Téléchargement de la vidéo
         inserer_texte_console("Téléchargement de la video en cours...", clear_console=True, root_update=True)
         is_video = True
-        video.download(output_path=sortie + '/', filename=file_name)
+        video.download(output_path=sortie + '/', filename=file_name+file_extension)
 
     # Si l'utilisateur veut télécharger une portion de la vidéo
     if debut != 0 or fin != yt.length:
-        ffmpeg_extract_subclip(sortie + '/' + file_name, debut, fin)
+        ffmpeg_extract_subclip(sortie + '/' + file_name + file_extension, debut, fin)
         inserer_texte_console("\nSéparation de l'extrait selectionné...", clear_console=True, root_update=True)
 
     inserer_texte_console("Téléchargement de la video terminé !", clear_console=True, root_update=True)
@@ -343,8 +339,10 @@ def telechargement(yt, id, combobox_debut_h, combobox_debut_min, combobox_debut_
 # -- Télécharger la miniature dans la meilleure qualité disponible --
 def telecharger_miniature():
     global sortie, short_url
-    urlretrieve(f'http://img.youtube.com/vi/{short_url}/maxresdefault.jpg', f'{sortie}/{convertions.formatage_video_name(yt.title, video_extension=False)}.jpg')
-
+    try:
+        urlretrieve(f'http://img.youtube.com/vi/{short_url}/maxresdefault.jpg', f'{sortie}/{convertions.formatage_video_name(yt.title, video_extension=False)}.jpg')
+    except:
+        inserer_texte_console(texte='Erreur lors du téléchargement de la miniature', clear_console=True, root_update=True)
 
 
 def new_thread_telechargement():
@@ -438,24 +436,27 @@ def convertir_video():
         
         # LIKES / DISLIKES
             # Récupération des données
-        likes, dislikes, somme = get_likes_and_dislikes(entry_link.get())
-            # Ligne pour faire le rapport
-        ratio.create_line(0, 0, likes/somme*200, 0, fill="blue", width=7)
-        ratio.create_line(likes/somme*200, 0, (likes/somme)*200+(dislikes/somme)*200, 0, fill="red", width=7)
-            # LIKES
-                # Likes
-        label_likes["fg"] = 'blue'
-        label_likes["text"] = '👍' + convertions.nb_vues(likes)
-                # Pourcentage likes
-        label_pourcentages_likes["text"] = str(round(likes/somme*100)) + '%'
-        label_pourcentages_likes["fg"] = 'blue'
-            # DISLIKES
-                # Dislikes
-        label_dislikes["fg"] = 'red'
-        label_dislikes["text"] = convertions.nb_vues(dislikes) + '👎'
-                # Pourcentage Dislikes
-        label_pourcentages_dislikes["text"] = str(round(dislikes/somme*100)) + '%'
-        label_pourcentages_dislikes["fg"] = 'red'
+        try:
+            likes, dislikes, somme = get_likes_and_dislikes(entry_link.get())
+                # Ligne pour faire le rapport
+            ratio.create_line(0, 0, likes/somme*200, 0, fill="blue", width=7)
+            ratio.create_line(likes/somme*200, 0, (likes/somme)*200+(dislikes/somme)*200, 0, fill="red", width=7)
+                # LIKES
+                    # Likes
+            label_likes["fg"] = 'blue'
+            label_likes["text"] = '👍' + convertions.nb_vues(likes)
+                    # Pourcentage likes
+            label_pourcentages_likes["text"] = str(round(likes/somme*100)) + '%'
+            label_pourcentages_likes["fg"] = 'blue'
+                # DISLIKES
+                    # Dislikes
+            label_dislikes["fg"] = 'red'
+            label_dislikes["text"] = convertions.nb_vues(dislikes) + '👎'
+                    # Pourcentage Dislikes
+            label_pourcentages_dislikes["text"] = str(round(dislikes/somme*100)) + '%'
+            label_pourcentages_dislikes["fg"] = 'red'
+        except:
+            inserer_texte_console(texte="Erreur d'affichage des likes et des dislikes", clear_console=False, root_update=False)
 
         # Affichage de tout les flux
         choix_video(yt.streams)
@@ -463,11 +464,11 @@ def convertir_video():
 
         global button_telecharger_video, button_telecharger_miniature
         # Bouton Télécharger Vidéo
-        liste_widgets.append(Button(information, text='Télécharger', command=new_thread_telechargement, pady=4, padx=9))
+        liste_widgets.append(Button(information, text='Télécharger', command=new_thread_telechargement, pady=4, padx=9, cursor="hand2"))
         liste_widgets[-1].pack(pady=(20, 0))
 
         # Bouton Télécharger miniature
-        liste_widgets.append(Button(information, text='Télécharger la miniature', command=telecharger_miniature))
+        liste_widgets.append(Button(information, text='Télécharger la miniature', command=telecharger_miniature, cursor="hand2"))
         liste_widgets[-1].pack(pady=(20, 0))
 
 
@@ -574,17 +575,17 @@ entry_link.bind("<Button - 3>", copy)
 
 icon_delete = PhotoImage(file = r"images/delete.png").subsample(20, 20) 
 
-button_delete = Button(tab1, command=clear_entry, image=icon_delete)
+button_delete = Button(tab1, command=clear_entry, image=icon_delete, cursor="hand2")
 button_delete.grid(column=1, row=1, padx=(0, 103))
 
-button_link = Button(tab1, text="Convertir", command=convertir_video, padx=15, pady=6)
+button_link = Button(tab1, text="Convertir", command=convertir_video, padx=15, pady=6, cursor="hand2")
 button_link.grid(column=0, row=2, pady=15, columnspan=2)
 
 tab1.columnconfigure(0, weight=1)
 
 def touche_entree(event):
     if tabControl.index("current") == 0:
-        convertir_video()
+        threading.Thread(target=convertir_video).start()
     if tabControl.index("current") == 1:
         new_thread_telechargement()
 
@@ -613,11 +614,14 @@ entry_chemin_destination = Entry(tab3, width=0)
 entry_chemin_destination.grid(column=1, row=0, padx=(10, 5), pady=(10, 0))
 entry_chemin_destination.insert(0, sortie)
 
-selec_chemin_destination = Button(tab3, text="Parcourir", command=dialogue_chemin)
+selec_chemin_destination = Button(tab3, text="Parcourir", command=dialogue_chemin, cursor="hand2")
 selec_chemin_destination.grid(column=2, row=0, pady=(10, 0), padx=(10, 0))
 
-button_desktop = Button(tab3, text='Par défault (Bureau)', command=select_desktop)
+button_desktop = Button(tab3, text='Par défault (Bureau)', command=select_desktop, cursor="hand2")
 button_desktop.grid(column=3, row=0, pady=(10, 0), padx=(10, 0))
+
+button_ouvrir_fichier_minia = Button(tab3, text='Ouvrir le dossier contenant les miniatures', command=lambda:os.startfile('miniatures_history') , cursor="hand2")
+button_ouvrir_fichier_minia.grid(column=0, row=1, columnspan=4,sticky='w', pady=(10, 0), padx=(10, 0))
 
 
 
@@ -774,7 +778,9 @@ with open('history.csv', newline='') as history_file:
     for row in reader:
         historique.append(row)
 
-historique = historique[::-1][0:min(len(historique), 6)]
+# On garde les 7 dernières vidéos sauf si 'history.csv' en contient moins après avoir inversé la liste pour obtenir les plus récentes
+
+historique = historique[::-1][0:min(len(historique), 7)]
 print(historique)
 
 
@@ -806,10 +812,8 @@ def history_url():
     convertir_video()
 
 
-
-for r in range(min(len(historique), 8)):
-
-    
+# On affiche les 7 dernières vidéos sauf 'history.csv' en contient moins
+for r in range(len(historique)):
 
     widgets_historique.append(Label(tab4, image=None))
     widgets_historique[-1].grid(column=0, row=r+1, padx=6, pady=5)
@@ -844,7 +848,7 @@ for r in range(min(len(historique), 8)):
     widgets_historique[-1].grid(column=4, row=r+1)
 
 
-    widgets_historique.append(Radiobutton(tab4, variable=id_history, value=r, command=history_url))
+    widgets_historique.append(Radiobutton(tab4, variable=id_history, value=r, command=history_url, cursor="hand2"))
     widgets_historique[-1].grid(column=6, row=r+1)
 
 
