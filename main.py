@@ -305,9 +305,6 @@ def telechargement(yt, id, combobox_debut_h, combobox_debut_min, combobox_debut_
         inserer_texte_console("\nFusion de la video et de l'audio en cours...", clear_console=True, root_update=True)
         fusionner_video_audio((sortie + '/' + file_name + file_extension), (sortie + '/' + file_name+'_audio'+file_extension), (sortie + '/' + file_name+'_video'+file_extension))
 
-        # Suppression de la video temporaire et de l'audio temporaire
-        supprimer_fichier_dossier('video/temp/video_temp')
-        supprimer_fichier_dossier('video/temp/audio_temp')
     
     # Si le flux contient l'audio
     else:
@@ -318,16 +315,12 @@ def telechargement(yt, id, combobox_debut_h, combobox_debut_min, combobox_debut_
 
     # Si l'utilisateur veut télécharger une portion de la vidéo
     if debut != 0 or fin != yt.length:
-        ffmpeg_extract_subclip(sortie + '/' + file_name + file_extension, debut, fin)
         inserer_texte_console("\nSéparation de l'extrait selectionné...", clear_console=True, root_update=True)
+        ffmpeg_extract_subclip(sortie + '/' + file_name + file_extension, debut, fin)
 
     inserer_texte_console("Téléchargement de la video terminé !", clear_console=True, root_update=True)
 
     print(sortie)
-
-    # Ouverture du dossier contenant la vidéo
-    
-
 
     ToastNotifier().show_toast(title="Numérisateur Original Universel Biochimique",
                                msg=f"Le téléchargement de votre vidéo \n({video.title})\n est terminé", 
@@ -772,85 +765,89 @@ label_fin_sec.grid(column=6, row=1, pady=pady_select_time)
 
 
 
-historique = []
-with open('history.csv', newline='') as history_file:
-    reader = csv.DictReader(history_file, delimiter=';')
-    for row in reader:
-        historique.append(row)
+def afficher_historique():
+    global widgets_historique, historique
 
-# On garde les 7 dernières vidéos sauf si 'history.csv' en contient moins après avoir inversé la liste pour obtenir les plus récentes
+    historique = []
+    with open('history.csv', newline='') as history_file:
+        reader = csv.DictReader(history_file, delimiter=';')
+        for row in reader:
+            historique.append(row)
 
-historique = historique[::-1][0:min(len(historique), 7)]
-print(historique)
+    # On garde les 7 dernières vidéos sauf si 'history.csv' en contient moins après avoir inversé la liste pour obtenir les plus récentes
 
-
-label_history_minia = Label(tab4, text='Miniature')
-label_history_minia.grid(column=0, row=0)
-
-label_history_minia = Label(tab4, text='Titre')
-label_history_minia.grid(column=1, row=0)
-
-label_history_minia = Label(tab4, text='Vues')
-label_history_minia.grid(column=2, row=0)
-
-label_history_minia = Label(tab4, text='Chaîne')
-label_history_minia.grid(column=3, row=0)
-
-label_history_minia = Label(tab4, text='Durée')
-label_history_minia.grid(column=4, row=0)
-
-widgets_historique = []
-button_download = []
+    historique = historique[::-1][0:min(len(historique), 7)]
+    print(historique)
 
 
+    label_history_minia = Label(tab4, text='Miniature')
+    label_history_minia.grid(column=0, row=0)
 
-id_history = IntVar()
+    label_history_minia = Label(tab4, text='Titre')
+    label_history_minia.grid(column=1, row=0)
 
-def history_url():
-    clear_entry()
-    entry_link.insert(0, historique[id_history.get()]['url'])
-    convertir_video()
+    label_history_minia = Label(tab4, text='Vues')
+    label_history_minia.grid(column=2, row=0)
 
+    label_history_minia = Label(tab4, text='Chaîne')
+    label_history_minia.grid(column=3, row=0)
 
-# On affiche les 7 dernières vidéos sauf 'history.csv' en contient moins
-for r in range(len(historique)):
+    label_history_minia = Label(tab4, text='Durée')
+    label_history_minia.grid(column=4, row=0)
 
-    widgets_historique.append(Label(tab4, image=None))
-    widgets_historique[-1].grid(column=0, row=r+1, padx=6, pady=5)
-    try:
-        widgets_historique.append(ImageTk.PhotoImage(Image.open('miniatures_history/' + convertir_url(historique[r]['url']) + '.jpg').resize((16*6, 9*6))))
-        widgets_historique[-2]['image'] = widgets_historique[-1]
-    except:
-        widgets_historique.append(ImageTk.PhotoImage(Image.open('images/mainiature_non_disponible.png').resize((16*6, 9*6))))
-        widgets_historique[-2]['image'] = widgets_historique[-1]
-
-    widgets_historique.append(Label(tab4, text=convertions.titre_ligne(historique[r]['titre'].replace("_", " ")), font=("TkDefaultFont", 7)))
-    widgets_historique[-1].grid(column=1, row=r+1)
-
-    widgets_historique.append(Label(tab4, text=convertions.nb_vues(historique[r]['vues']), font=("TkDefaultFont", 7)))
-    widgets_historique[-1].grid(column=2, row=r+1)
-
-    widgets_historique.append(Label(tab4, text=historique[r]['chaine'], font=("TkDefaultFont", 7)))
-    widgets_historique[-1].grid(column=3, row=r+1)
-
-    h_oui, m_oui, s_oui = convertions.duree(int(historique[r]['duree']))
-        # Si durée est inferieur à 1 minutes
-    if int(historique[r]['duree']) < 60:
-        oui = str(s_oui) + "s"
-        # Sinon si la durée est inferieur à  1 heure
-    elif int(historique[r]['duree']) < 3600:
-       oui = str(m_oui) + "m" + str(s_oui) + "s"
-        # Si la durée est supérieure à 1 heure
-    else:
-        oui = str(h_oui) + "h" + str(m_oui) + "m" + str(s_oui) + "s"
-    
-    widgets_historique.append(Label(tab4, text=oui, font=("TkDefaultFont", 7)))
-    widgets_historique[-1].grid(column=4, row=r+1)
+    widgets_historique = []
+    button_download = []
 
 
-    widgets_historique.append(Radiobutton(tab4, variable=id_history, value=r, command=history_url, cursor="hand2"))
-    widgets_historique[-1].grid(column=6, row=r+1)
 
+    id_history = IntVar()
+
+    def history_url():
+        clear_entry()
+        entry_link.insert(0, historique[id_history.get()]['url'])
+        convertir_video()
+
+
+    # On affiche les 7 dernières vidéos sauf 'history.csv' en contient moins
+    for r in range(len(historique)):
+
+        widgets_historique.append(Label(tab4, image=None))
+        widgets_historique[-1].grid(column=0, row=r+1, padx=6, pady=5)
+        try:
+            widgets_historique.append(ImageTk.PhotoImage(Image.open('miniatures_history/' + convertir_url(historique[r]['url']) + '.jpg').resize((16*6, 9*6))))
+            widgets_historique[-2]['image'] = widgets_historique[-1]
+        except:
+            widgets_historique.append(ImageTk.PhotoImage(Image.open('images/mainiature_non_disponible.png').resize((16*6, 9*6))))
+            widgets_historique[-2]['image'] = widgets_historique[-1]
+
+        widgets_historique.append(Label(tab4, text=convertions.titre_ligne(historique[r]['titre'].replace("_", " ")), font=("TkDefaultFont", 7)))
+        widgets_historique[-1].grid(column=1, row=r+1)
+
+        widgets_historique.append(Label(tab4, text=convertions.nb_vues(historique[r]['vues']), font=("TkDefaultFont", 7)))
+        widgets_historique[-1].grid(column=2, row=r+1)
+
+        widgets_historique.append(Label(tab4, text=historique[r]['chaine'], font=("TkDefaultFont", 7)))
+        widgets_historique[-1].grid(column=3, row=r+1)
+
+        h_oui, m_oui, s_oui = convertions.duree(int(historique[r]['duree']))
+            # Si durée est inferieur à 1 minutes
+        if int(historique[r]['duree']) < 60:
+            oui = str(s_oui) + "s"
+            # Sinon si la durée est inferieur à  1 heure
+        elif int(historique[r]['duree']) < 3600:
+            oui = str(m_oui) + "m" + str(s_oui) + "s"
+            # Si la durée est supérieure à 1 heure
+        else:
+            oui = str(h_oui) + "h" + str(m_oui) + "m" + str(s_oui) + "s"
+        
+        widgets_historique.append(Label(tab4, text=oui, font=("TkDefaultFont", 7)))
+        widgets_historique[-1].grid(column=4, row=r+1)
+
+
+        widgets_historique.append(Radiobutton(tab4, variable=id_history, value=r, command=history_url, cursor="hand2"))
+        widgets_historique[-1].grid(column=6, row=r+1)
+
+afficher_historique()
 
 
 
