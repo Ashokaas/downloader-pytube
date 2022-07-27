@@ -303,8 +303,11 @@ def telechargement(yt, id, combobox_debut_h, combobox_debut_min, combobox_debut_
 
         # Fusion de la vidéo et de l'audio
         inserer_texte_console("\nFusion de la video et de l'audio en cours...", clear_console=True, root_update=True)
-        fusionner_video_audio((sortie + '/' + file_name + file_extension), (sortie + '/' + file_name+'_audio'+file_extension), (sortie + '/' + file_name+'_video'+file_extension))
+        fusionner_video_audio((sortie + '/' + file_name+'_video' + file_extension), (sortie + '/' + file_name+'_audio'+file_extension), (sortie + '/' + file_name+file_extension))
 
+        # Suppression des fichiers temporaires
+        os.remove(rf'{sortie}/{file_name}_video{file_extension}')
+        os.remove(rf'{sortie}/{file_name}_audio{file_extension}')
     
     # Si le flux contient l'audio
     else:
@@ -320,12 +323,13 @@ def telechargement(yt, id, combobox_debut_h, combobox_debut_min, combobox_debut_
 
     inserer_texte_console("Téléchargement de la video terminé !", clear_console=True, root_update=True)
 
+
     print(sortie)
 
     ToastNotifier().show_toast(title="Numérisateur Original Universel Biochimique",
                                msg=f"Le téléchargement de votre vidéo \n({video.title})\n est terminé", 
                                icon_path="images/youtube.ico",
-                               callback_on_click=lambda:subprocess.Popen(r'explorer /select,"' + sortie.replace('/', '\\') + '\\' + file_name + r'"'))
+                               callback_on_click=lambda:subprocess.Popen(r'explorer /select,"' + sortie.replace('/', '\\') + '\\' + file_name + file_extension + r'"'))
 
     
 
