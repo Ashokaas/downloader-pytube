@@ -50,6 +50,8 @@ liste_widgets = []
 # Importation de la sortie depuis sortie.data
 with open("sortie.data", "r") as fichier_sortie:
     sortie = fichier_sortie.readline()
+    if sortie == '':
+        sortie = os.path.expanduser('~') + r"\Desktop"
 
 
 
