@@ -1,0 +1,4 @@
+pytube>12.1.0
+moviepy.config>=1.0.3
+requests>=2.28.0
+win10toast_click=>0.1.2
