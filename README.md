@@ -1,10 +1,11 @@
-# numerisateur-original-universel-biochimique
-Downloader YouTube
-beta
-Ne fonctionne plus depuis que la librairie PyTube a a été mise à jour
-  - Affiche les informations d'une vidéo
-  
+# Downloader YouTube
+<br>
+Ne fonctionne plus depuis que la librairie PyTube a été mise à jour.
+<br>
+<br> 
+
 1.0
+  - Affiche les informations d'une vidéo
   - Téléchargement d'une vidéo dans la qualité maximale
   - Onglet "Paramètres" pour définir le dossier d'enregistrement
 
