@@ -1,6 +1,7 @@
 # numerisateur-original-universel-biochimique
 Downloader YouTube
 beta
+Ne fonctionne plus depuis que la librairie PyTube a a été mise à jour
   - Affiche les informations d'une vidéo
   
 1.0
